@@ -1,0 +1,1 @@
+"""MiniStore backend application package."""

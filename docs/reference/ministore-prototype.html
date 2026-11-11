@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f4f4">
+  <title>Dashboard | Creative Tim</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202124;
+      --muted: #78808a;
+      --line: #e4e6e8;
+      --paper: #fff;
+      --canvas: #f4f4f4;
+      --green: #4caf50;
+      --blue: #3698ec;
+      --red: #f44336;
+      --orange: #fb8c00;
+      --sidebar-width: 150px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 11px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .sidebar {
+      position: fixed;
+      z-index: 4;
+      inset: 0 auto 0 0;
+      width: var(--sidebar-width);
+      padding: 9px 8px;
+      background: var(--paper);
+      border-right: 1px solid #e8e8e8;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 28px;
+      padding: 0 8px;
+      margin-bottom: 8px;
+      color: #555b61;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .brand-mark {
+      display: grid;
+      width: 16px;
+      height: 16px;
+      place-items: center;
+      border: 1px solid #969da3;
+      border-radius: 2px;
+      color: #5a6066;
+      font-size: 10px;
+      line-height: 1;
+    }
+    .nav { display: grid; gap: 2px; }
+    .nav-label {
+      padding: 14px 12px 5px;
+      color: #a0a4a8;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .nav-link {
+      display: flex;
+      min-height: 26px;
+      align-items: center;
+      gap: 7px;
+      padding: 0 9px;
+      border-radius: 5px;
+      color: #656b70;
+      text-decoration: none;
+      transition: background .16s ease, color .16s ease;
+    }
+    .nav-link:hover { background: #f3f4f5; color: #202124; }
+    .nav-link.active {
+      color: #fff;
+      background: linear-gradient(110deg, #45464a, #25262a);
+      box-shadow: 0 2px 6px #00000024;
+    }
+    .nav-icon { width: 13px; text-align: center; font-size: 12px; }
+
+    .workspace { min-height: 100vh; margin-left: var(--sidebar-width); }
+    .topbar {
+      display: flex;
+      height: 34px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+    }
+    .breadcrumbs { color: #9aa0a6; }
+    .breadcrumbs strong { color: #33383d; font-weight: 500; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .search {
+      width: 148px;
+      height: 27px;
+      padding: 0 10px;
+      border: 1px solid #dfe1e3;
+      border-radius: 5px;
+      outline: none;
+      background: #fafafa;
+      color: var(--ink);
+    }
+    .search:focus { border-color: #9ca3aa; box-shadow: 0 0 0 2px #2021240a; }
+    .outline-button, .star-button {
+      height: 24px;
+      padding: 0 10px;
+      border: 1px solid #e94b73;
+      border-radius: 5px;
+      background: transparent;
+      color: #e94b73;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .star-button { border-color: #d7dadd; color: #565d64; }
+    .star-count {
+      margin-left: -10px;
+      padding: 5px 7px;
+      border: 1px solid #d7dadd;
+      border-radius: 0 4px 4px 0;
+      background: #fff;
+      color: #4c5258;
+    }
+    .icon-button {
+      display: grid;
+      width: 20px;
+      height: 24px;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #737a80;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    main { padding: 8px 14px 14px; }
+    .page-heading { margin: 0 0 17px 10px; }
+    h1 { margin: 0 0 3px; font-size: 16px; font-weight: 650; }
+    .page-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+
+    .stats-grid, .charts-grid, .lower-grid { display: grid; gap: 16px; }
+    .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+    .stat-card, .panel {
+      border: 1px solid #e3e4e6;
+      border-radius: 6px;
+      background: var(--paper);
+      box-shadow: 0 1px 2px #1111110a;
+    }
+    .stat-card {
+      position: relative;
+      min-height: 75px;
+      padding: 9px 12px 8px;
+    }
+    .stat-label { margin-bottom: 3px; color: #767d83; }
+    .stat-value { font-size: 16px; font-weight: 700; line-height: 1.15; }
+    .stat-change { margin-top: 12px; color: #7d858b; font-size: 10px; }
+    .positive { color: var(--green); font-weight: 700; }
+    .negative { color: var(--red); font-weight: 700; }
+    .stat-icon {
+      position: absolute;
+      top: 5px;
+      right: 6px;
+      display: grid;
+      width: 33px;
+      height: 33px;
+      place-items: center;
+      border-radius: 6px;
+      background: linear-gradient(145deg, #3c3d41, #18191c);
+      box-shadow: 0 3px 8px #00000030;
+      color: #fff;
+      font-size: 14px;
+    }
+    .charts-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; }
+    .panel { min-width: 0; overflow: hidden; }
+    .chart-panel { min-height: 219px; padding: 13px 11px 9px; }
+    .panel-title { margin: 0 0 3px; font-size: 12px; font-weight: 650; }
+    .panel-subtitle { min-height: 14px; color: var(--muted); font-size: 10px; }
+    .chart { display: block; width: 100%; height: 137px; margin-top: 5px; overflow: visible; }
+    .chart .gridline { stroke: #e7e8e9; stroke-width: 1; }
+    .chart .axis-label { fill: #8d9297; font: 9px "Segoe UI", sans-serif; }
+    .chart .x-label { fill: #73797e; font: 9px "Segoe UI", sans-serif; }
+    .chart .bar { fill: #43a047; }
+    .chart .line { fill: none; stroke: #4caf50; stroke-width: 2; }
+    .chart .dot { fill: #4caf50; stroke: #fff; stroke-width: 1; }
+    .panel-foot { margin-top: 3px; color: #78808a; font-size: 10px; }
+    .lower-grid { grid-template-columns: minmax(0, 2fr) minmax(270px, 1fr); align-items: stretch; }
+    .projects-panel { min-height: 342px; padding-top: 13px; }
+    .panel-heading { padding: 0 12px 12px; }
+    .panel-heading .panel-subtitle { margin-top: 6px; }
+    .projects-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .projects-table th {
+      height: 26px;
+      padding: 0 10px;
+      color: #999da1;
+      font-size: 7px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .projects-table td { height: 42px; padding: 0 10px; border-top: 1px solid #e6e7e8; }
+    .projects-table td:first-child { width: 44%; }
+    .projects-table td:nth-child(2) { width: 20%; }
+    .projects-table td:nth-child(3) { width: 13%; color: #656b70; font-size: 9px; }
+    .projects-table td:last-child { width: 23%; }
+    .company { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+    .company-mark {
+      display: grid;
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      place-items: center;
+      border-radius: 3px;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+    }
+    .mark-xd { background: #8e1457; }
+    .mark-at { background: #267be7; }
+    .mark-slack { background: #22a8a0; }
+    .mark-spotify { border-radius: 50%; background: #25b95a; font-size: 10px; }
+    .mark-diamond { background: #2389ed; transform: rotate(45deg) scale(.8); }
+    .mark-linkedin { background: #e64267; }
+    .avatars { display: flex; align-items: center; padding-left: 1px; }
+    .avatar {
+      display: grid;
+      width: 15px;
+      height: 15px;
+      place-items: center;
+      margin-left: -4px;
+      border: 1px solid #fff;
+      border-radius: 50%;
+      background: linear-gradient(140deg, #d6b49b 0 42%, #40545a 43% 65%, #28252a 66%);
+      color: #fff;
+      font-size: 6px;
+      font-weight: 700;
+    }
+    .avatar:nth-child(2) { background: linear-gradient(140deg, #d4a47f 0 40%, #4a2d2b 41% 69%, #202326 70%); }
+    .avatar:nth-child(3) { background: linear-gradient(140deg, #e0b69d 0 43%, #82644a 44% 69%, #25282a 70%); }
+    .avatar:nth-child(4) { background: linear-gradient(140deg, #c8977e 0 40%, #292c30 41% 69%, #161719 70%); }
+    .completion-label { display: block; margin-bottom: 4px; color: #60666c; font-size: 9px; }
+    .progress { width: min(82px, 100%); height: 2px; background: #e5e6e7; }
+    .progress span { display: block; height: 100%; background: var(--blue); }
+    .progress.complete span { background: var(--green); }
+    .orders-panel { min-height: 342px; padding: 13px 12px; }
+    .orders-panel .panel-heading { padding: 0 0 13px; }
+    .timeline { position: relative; display: grid; gap: 0; padding: 2px 0 0 6px; }
+    .timeline::before { position: absolute; top: 12px; bottom: 17px; left: 9px; width: 1px; background: #e6e7e8; content: ""; }
+    .event { position: relative; display: grid; grid-template-columns: 19px 1fr; gap: 9px; min-height: 43px; }
+    .event-icon {
+      z-index: 1;
+      display: grid;
+      width: 8px;
+      height: 18px;
+      place-items: center;
+      background: #fff;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .event:nth-child(2) .event-icon { color: var(--red); }
+    .event:nth-child(3) .event-icon { color: var(--blue); }
+    .event:nth-child(4) .event-icon { color: var(--orange); }
+    .event:nth-child(5) .event-icon { color: #df3b68; }
+    .event:nth-child(6) .event-icon { color: #62676b; }
+    .event-title { padding-top: 2px; font-size: 10px; font-weight: 600; }
+    .event-time { margin-top: 3px; color: #858b90; font-size: 9px; }
+    .empty-state { display: none; padding: 18px 12px; color: var(--muted); }
+    .inventory-view { padding-top: 14px; }
+    .inventory-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 0 0 18px 4px; }
+    .inventory-kicker { margin: 0 0 5px; color: #8d68d8; font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .inventory-heading h1 { margin-bottom: 4px; font-size: 21px; }
+    .inventory-heading p:last-child { margin: 0; color: var(--muted); }
+    .inventory-heading-actions { display: flex; gap: 8px; }
+    .inventory-button { min-height: 34px; padding: 0 13px; border: 1px solid #e0d6f7; border-radius: 6px; background: #fff; color: #6942bf; cursor: pointer; font-weight: 600; }
+    .inventory-button.primary { border-color: #8056d9; background: #8056d9; color: #fff; box-shadow: 0 3px 8px #8056d933; }
+    .inventory-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .inventory-metric { min-width: 0; padding: 12px 14px; border: 1px solid #e8e5f0; border-radius: 7px; background: linear-gradient(120deg, #fff, #fbfaff); }
+    .inventory-metric-label { margin-bottom: 5px; color: var(--muted); font-size: 10px; }
+    .inventory-metric-value { overflow: hidden; color: #27232f; font-size: 17px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .inventory-surface { border: 1px solid #e5e2ed; border-radius: 8px; background: #fff; box-shadow: 0 3px 14px #2c214008; }
+    .inventory-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 15px; border-bottom: 1px solid #eeecf2; }
+    .inventory-toolbar-title { margin: 0; font-size: 13px; font-weight: 700; }
+    .inventory-toolbar-actions { display: flex; align-items: center; gap: 8px; }
+    .inventory-search, .category-filter { height: 32px; border: 1px solid #e3e1e9; border-radius: 5px; background: #fff; color: #35313d; }
+    .inventory-search { width: min(230px, 30vw); padding: 0 10px; }
+    .category-filter { padding: 0 25px 0 9px; }
+    .inventory-table-wrap { overflow: auto; }
+    .inventory-table { width: 100%; min-width: 990px; border-collapse: collapse; text-align: left; }
+    .inventory-table th { position: sticky; z-index: 1; top: 0; padding: 10px 9px; background: #f8f7fb; color: #777181; font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .inventory-table td { height: 36px; padding: 7px 9px; border-top: 1px solid #efedf2; color: #44404b; font-size: 10px; white-space: nowrap; }
+    .inventory-table tbody tr:hover { background: #fbfaff; }
+    .inventory-table .group-row th { position: static; padding: 9px; border-top: 1px solid #e6e2ee; background: #fff; color: #59477d; font-size: 10px; text-align: left; }
+    .inventory-table .number { text-align: right; font-variant-numeric: tabular-nums; }
+    .inventory-table .product-name { color: #282430; font-weight: 600; }
+    .inventory-table .code { color: #777181; }
+    .inventory-table tfoot td { position: sticky; bottom: 0; border-top: 2px solid #dcd7e7; background: #fbfaff; color: #4a4357; font-weight: 700; }
+    .inventory-table tfoot td:last-child { color: #da4c54; }
+    .inventory-count { color: #85808e; font-size: 10px; }
+    .inventory-empty { display: none; padding: 24px; color: var(--muted); text-align: center; }
+    .product-dialog { width: min(480px, calc(100vw - 28px)); padding: 0; border: 1px solid #e5e2ed; border-radius: 9px; box-shadow: 0 18px 60px #19132438; }
+    .product-dialog::backdrop { background: #20192b66; backdrop-filter: blur(2px); }
+    .product-form { padding: 18px; }
+    .product-form h2 { margin: 0 0 4px; font-size: 17px; }
+    .product-form > p { margin: 0 0 16px; color: var(--muted); }
+    .product-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    .product-fields label { display: grid; gap: 5px; color: #5f5969; font-size: 10px; font-weight: 600; }
+    .product-fields input, .product-fields select { width: 100%; height: 34px; padding: 0 9px; border: 1px solid #e2dfea; border-radius: 5px; background: #fff; color: var(--ink); }
+    .product-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .purchased-view { padding-top: 14px; }
+    .purchased-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin: 0 0 18px 4px; }
+    .purchased-heading h1 { margin-bottom: 4px; font-size: 21px; }
+    .purchased-heading p { margin: 0; color: var(--muted); }
+    .purchase-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .purchase-metric { padding: 12px 14px; border: 1px solid #e6e1f1; border-radius: 7px; background: linear-gradient(120deg, #fff, #fbfaff); }
+    .purchase-metric-label { margin-bottom: 5px; color: var(--muted); font-size: 10px; }
+    .purchase-metric-value { color: #2c2638; font-size: 17px; font-weight: 700; }
+    .purchased-layout { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(260px, .9fr); gap: 14px; align-items: start; }
+    .purchase-list-panel, .purchase-detail-panel { min-width: 0; overflow: hidden; border: 1px solid #e6e2ec; border-radius: 8px; background: #fff; box-shadow: 0 3px 14px #2c214008; }
+    .purchase-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; border-bottom: 1px solid #eeecf2; }
+    .purchase-toolbar h2, .purchase-detail-panel h2 { margin: 0 0 4px; font-size: 13px; }
+    .purchase-toolbar p, .purchase-detail-panel p { margin: 0; color: var(--muted); font-size: 10px; }
+    .purchase-toolbar-tools { display: flex; gap: 7px; }
+    .purchase-search, .purchase-filter { height: 32px; border: 1px solid #e3e1e9; border-radius: 5px; background: #fff; }
+    .purchase-search { width: min(185px, 22vw); padding: 0 9px; }
+    .purchase-filter { padding: 0 20px 0 8px; }
+    .purchase-table-wrap { overflow: auto; }
+    .purchase-table { width: 100%; min-width: 620px; border-collapse: collapse; text-align: left; }
+    .purchase-table th { padding: 10px 8px; background: #f8f7fb; color: #777181; font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .purchase-table td { height: 39px; padding: 7px 8px; border-top: 1px solid #efedf2; color: #514d58; font-size: 10px; white-space: nowrap; }
+    .purchase-table tr.purchase-row { cursor: pointer; }
+    .purchase-table tr.purchase-row:hover { background: #fbfaff; }
+    .purchase-table tr.purchase-row.selected { background: #f4efff; }
+    .purchase-table .purchase-group th { padding: 9px 8px; border-top: 1px solid #e6e2ec; background: #fff; color: #574679; text-align: left; }
+    .purchase-table .number { text-align: right; font-variant-numeric: tabular-nums; }
+    .purchase-product-button { max-width: 190px; padding: 0; border: 0; background: transparent; color: #30283e; cursor: pointer; font-weight: 600; text-align: left; text-overflow: ellipsis; overflow: hidden; }
+    .purchase-code { color: #85808e; }
+    .purchase-state { display: inline-flex; padding: 4px 7px; border-radius: 4px; background: #e9f8f0; color: #268252; font-size: 9px; }
+    .purchase-state.empty { background: #f2f1f4; color: #827d89; }
+    .purchase-table tfoot td { border-top: 2px solid #ded9e8; background: #fbfaff; color: #453b56; font-weight: 700; }
+    .purchase-detail-panel { padding: 15px; }
+    .purchase-detail-head { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 13px; border-bottom: 1px solid #efedf2; }
+    .purchase-detail-head h2 { max-width: 190px; font-size: 14px; }
+    .purchase-detail-code { margin-top: 4px; color: #88828f; font-size: 10px; }
+    .purchase-section-title { margin: 15px 0 9px; color: #777181; font-size: 9px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+    .purchase-facts { display: grid; gap: 10px; }
+    .purchase-fact { display: flex; justify-content: space-between; gap: 12px; color: #77717f; font-size: 10px; }
+    .purchase-fact strong { color: #302b37; font-weight: 600; text-align: right; }
+    .purchase-periods { display: grid; }
+    .purchase-period { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid #efedf2; color: #67616e; font-size: 10px; }
+    .purchase-period strong { color: #383340; font-weight: 600; }
+    .purchase-empty { display: none; padding: 20px; color: var(--muted); text-align: center; }
+    .purchase-dialog { max-width: 470px; }
+    .stock-view { padding-top: 14px; }
+    .stock-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin: 0 0 17px 4px; }
+    .stock-period-actions { display: flex; align-items: center; gap: 8px; }
+    .stock-period-label { padding: 0 8px; color: #647076; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .stock-period-button { min-height: 32px; padding: 0 10px; border: 1px solid #dfe5e7; border-radius: 5px; background: #fff; color: #45565d; cursor: pointer; font-size: 9px; font-weight: 600; white-space: nowrap; }
+    .stock-period-button.primary { border-color: #438ca6; background: #438ca6; color: #fff; }
+    .stock-kicker { margin: 0 0 5px; color: #438ca6; font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .stock-heading h1 { margin-bottom: 4px; font-size: 21px; }
+    .stock-heading p:last-child { margin: 0; color: var(--muted); }
+    .stock-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; margin-bottom: 13px; }
+    .stock-metric { min-width: 0; padding: 11px 12px; border: 1px solid #e0e8eb; border-radius: 7px; background: linear-gradient(120deg, #fff, #f8fbfc); }
+    .stock-metric-label { margin-bottom: 5px; color: var(--muted); font-size: 9px; }
+    .stock-metric-value { overflow: hidden; color: #263d46; font-size: 16px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .stock-metric-note { margin-top: 5px; color: #838b8f; font-size: 9px; }
+    .stock-insights { display: grid; grid-template-columns: minmax(240px, .9fr) minmax(230px, .8fr) minmax(300px, 1.3fr); gap: 12px; margin-bottom: 13px; }
+    .stock-panel { min-width: 0; padding: 13px; border: 1px solid #e3e7e9; border-radius: 7px; background: #fff; box-shadow: 0 2px 8px #1d313508; }
+    .stock-panel h2 { margin: 0 0 4px; font-size: 12px; font-weight: 700; }
+    .stock-panel-subtitle { margin: 0; color: var(--muted); font-size: 9px; }
+    .category-mix-content { display: flex; align-items: center; justify-content: center; gap: 15px; min-height: 135px; }
+    .stock-donut { display: grid; width: 112px; height: 112px; flex: 0 0 112px; place-items: center; border-radius: 50%; background: conic-gradient(#79afc2 0 45.5%, #f0c66c 45.5% 90.6%, #8ab8a6 90.6% 100%); }
+    .stock-donut-hole { display: grid; width: 65px; height: 65px; place-content: center; border-radius: 50%; background: #fff; text-align: center; }
+    .stock-donut-hole strong { font-size: 15px; }
+    .stock-donut-hole span { margin-top: 2px; color: #858b90; font-size: 8px; }
+    .category-legend { display: grid; gap: 9px; min-width: 0; }
+    .category-legend-row { display: grid; grid-template-columns: 7px minmax(70px, 1fr) auto; align-items: center; gap: 6px; color: #676d72; font-size: 9px; }
+    .legend-swatch { width: 7px; height: 7px; border-radius: 50%; background: #79afc2; }
+    .category-legend-row:nth-child(2) .legend-swatch { background: #f0c66c; }
+    .category-legend-row:nth-child(3) .legend-swatch { background: #8ab8a6; }
+    .category-legend-row strong { color: #3e464a; font-size: 9px; }
+    .stock-alert-list { display: grid; gap: 9px; margin-top: 14px; }
+    .stock-alert { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 9px; border-radius: 5px; background: #f8f8f9; }
+    .stock-alert-label { color: #656b70; font-size: 9px; }
+    .stock-alert-count { color: #394248; font-size: 12px; font-weight: 700; }
+    .stock-alert.negative-alert { background: #fff2f1; }
+    .stock-alert.negative-alert .stock-alert-count { color: #d4443b; }
+    .top-sellers { display: grid; gap: 9px; margin-top: 12px; }
+    .top-seller { display: grid; grid-template-columns: minmax(92px, 1fr) minmax(65px, 1.5fr) 28px; align-items: center; gap: 8px; }
+    .top-seller-name { overflow: hidden; color: #565e62; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .top-seller-track { height: 9px; overflow: hidden; border-radius: 2px; background: #edf1f2; }
+    .top-seller-bar { height: 100%; border-radius: inherit; background: #83b3c4; }
+    .top-seller-value { color: #434b4f; font-size: 9px; font-variant-numeric: tabular-nums; text-align: right; }
+    .stock-table-panel { overflow: hidden; border: 1px solid #e3e7e9; border-radius: 7px; background: #fff; box-shadow: 0 2px 8px #1d313508; }
+    .stock-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #e9edef; }
+    .stock-toolbar h2 { margin: 0 0 4px; font-size: 12px; }
+    .stock-toolbar p { margin: 0; color: var(--muted); font-size: 9px; }
+    .stock-tools { display: flex; gap: 7px; }
+    .stock-search, .stock-filter { height: 31px; border: 1px solid #dfe5e7; border-radius: 5px; background: #fff; }
+    .stock-search { width: min(210px, 25vw); padding: 0 9px; }
+    .stock-filter { padding: 0 22px 0 8px; }
+    .stock-table-wrap { overflow: auto; }
+    .stock-table { width: 100%; min-width: 1130px; border-collapse: collapse; text-align: left; }
+    .stock-table th { padding: 9px 7px; background: #858585; color: #fff; font-size: 8px; font-weight: 650; white-space: nowrap; }
+    .stock-table td { height: 32px; padding: 6px 7px; border-top: 1px solid #e9edef; color: #4a5256; font-size: 9px; white-space: nowrap; }
+    .stock-table tbody tr:hover { background: #f8fbfc; }
+    .stock-table .stock-group th { padding: 8px; border-top: 1px solid #e0e6e8; background: #fff; color: #30464f; text-align: left; }
+    .stock-table .number { text-align: right; font-variant-numeric: tabular-nums; }
+    .stock-table .stock-product { color: #28363b; font-weight: 600; }
+    .stock-table tfoot td { border-top: 2px solid #dce4e6; background: #f5fafb; color: #34464c; font-weight: 700; }
+    .stock-status { display: inline-flex; padding: 3px 6px; border-radius: 4px; background: #e9f5ef; color: #37815c; font-size: 8px; }
+    .stock-status.empty { background: #fff5e4; color: #9c6c15; }
+    .stock-status.negative { background: #ffefee; color: #c33c34; }
+    .stock-empty { display: none; padding: 22px; color: var(--muted); text-align: center; }
+    .stock-history-dialog { width: min(1280px, 96vw); max-height: 92vh; overflow: auto; padding: 0; border: 1px solid #dfe5e7; border-radius: 8px; box-shadow: 0 18px 60px #19132438; }
+    .stock-history-content { padding: 17px; }
+    .stock-history-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+    .stock-history-heading h2 { margin: 0 0 4px; font-size: 16px; }
+    .stock-history-heading p { margin: 0; color: var(--muted); font-size: 10px; }
+    .stock-history-list { display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 12px; }
+    .stock-history-item { flex: 0 0 auto; padding: 7px 10px; border: 1px solid #dfe5e7; border-radius: 5px; background: #fff; color: #59646a; cursor: pointer; font-size: 9px; }
+    .stock-history-item strong { color: inherit; font-size: inherit; }
+    .stock-history-item[aria-pressed="true"] { border-color: #438ca6; background: #438ca6; color: #fff; }
+    .stock-history-item span { display: none; }
+    .stock-history-empty { padding: 20px; color: var(--muted); font-size: 10px; text-align: center; }
+    .stock-history-snapshot { display: grid; gap: 11px; }
+    .stock-history-snapshot[hidden] { display: none; }
+    .stock-history-month-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .stock-history-month-heading h3 { margin: 0; color: #34464c; font-size: 13px; }
+    .stock-history-month-heading span { color: #7d858a; font-size: 9px; }
+    .stock-history-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+    .stock-history-metric { min-width: 0; padding: 9px 10px; border: 1px solid #e5eaec; border-radius: 5px; background: #fafcfc; }
+    .stock-history-metric span { display: block; margin-bottom: 4px; color: #778187; font-size: 8px; }
+    .stock-history-metric strong { display: block; overflow: hidden; color: #36474d; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+    .stock-history-analytics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .stock-history-analytics[hidden], .stock-history-table-wrap[hidden] { display: none; }
+    .stock-history-insight { padding: 10px; border: 1px solid #e7ebed; border-radius: 5px; }
+    .stock-history-insight h4 { margin: 0 0 7px; color: #4a575d; font-size: 9px; }
+    .stock-history-insight-content { display: grid; gap: 5px; color: #6b7479; font-size: 8px; }
+    .stock-history-row { display: flex; justify-content: space-between; gap: 8px; }
+    .stock-history-table-wrap { max-height: 38vh; overflow: auto; border: 1px solid #e6eaec; border-radius: 5px; }
+    .stock-history-table { min-width: 1050px; }
+    .stock-history-legacy { color: #7a6a47; background: #fff9eb; }
+    .daily-view { padding-top: 14px; }
+    .daily-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin: 0 0 17px 4px; }
+    .daily-heading h1 { margin-bottom: 4px; font-size: 21px; }
+    .daily-heading p { margin: 0; color: var(--muted); }
+    .daily-date { color: #6d7980; font-size: 10px; white-space: nowrap; }
+    .daily-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 13px; }
+    .daily-metric { min-width: 0; padding: 12px 14px; border: 1px solid #e1e8eb; border-radius: 7px; background: linear-gradient(120deg, #fff, #f8fbfc); }
+    .daily-metric-label { margin-bottom: 5px; color: var(--muted); font-size: 9px; }
+    .daily-metric-value { overflow: hidden; color: #2f424b; font-size: 17px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .daily-metric-value.loss { color: #d54b43; }
+    .daily-metric-note { margin-top: 5px; color: #858d91; font-size: 9px; }
+    .daily-ledger { overflow: hidden; border: 1px solid #e2e7e9; border-radius: 7px; background: #fff; box-shadow: 0 2px 8px #1d313508; }
+    .daily-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #e9edef; }
+    .daily-toolbar h2 { margin: 0 0 4px; font-size: 12px; }
+    .daily-toolbar p { margin: 0; color: var(--muted); font-size: 9px; }
+    .daily-tools { display: flex; gap: 7px; }
+    .daily-search, .daily-category { height: 31px; border: 1px solid #dfe5e7; border-radius: 5px; background: #fff; }
+    .daily-search { width: min(220px, 26vw); padding: 0 9px; }
+    .daily-category { padding: 0 22px 0 8px; }
+    .daily-table-wrap { overflow: auto; }
+    .daily-table { width: 100%; min-width: 1080px; border-collapse: collapse; text-align: left; }
+    .daily-table th { padding: 9px 7px; background: #828282; color: #fff; font-size: 8px; font-weight: 650; white-space: nowrap; }
+    .daily-table th.for-sale-heading { background: #df3838; }
+    .daily-table td { height: 33px; padding: 6px 7px; border-top: 1px solid #e9edef; color: #495258; font-size: 9px; white-space: nowrap; }
+    .daily-table tbody tr:hover { background: #f7fafb; }
+    .daily-table .daily-group th { padding: 8px; border-top: 1px solid #e0e6e8; background: #fff; color: #344a53; text-align: left; }
+    .daily-table .number { text-align: right; font-variant-numeric: tabular-nums; }
+    .daily-table .daily-product { color: #29373d; font-weight: 600; }
+    .daily-table tfoot td { border-top: 2px solid #dce4e6; background: #f5fafb; color: #394a50; font-weight: 700; }
+    .daily-toolbar-note { padding: 10px 14px; border-top: 1px solid #e9edef; color: #737d82; font-size: 9px; }
+    .daily-toolbar-note strong { color: #33464e; }
+    .daily-empty { display: none; padding: 22px; color: var(--muted); text-align: center; }
+    :focus-visible { outline: 2px solid #3698ec; outline-offset: 2px; }
+    main[hidden] { display: none; }
+
+    @media (max-width: 1100px) {
+      :root { --sidebar-width: 136px; }
+      .charts-grid { gap: 10px; }
+      .stats-grid { gap: 10px; }
+      .lower-grid { grid-template-columns: minmax(0, 1.8fr) minmax(245px, 1fr); gap: 10px; }
+      .projects-table td:first-child { width: 40%; }
+    }
+    @media (max-width: 800px) {
+      :root { --sidebar-width: 62px; }
+      .sidebar { padding: 9px 6px; }
+      .brand { justify-content: center; padding: 0; }
+      .brand-name, .nav-link span:not(.nav-icon), .nav-label { display: none; }
+      .nav-link { justify-content: center; padding: 0; }
+      .nav-icon { width: auto; font-size: 14px; }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .charts-grid { grid-template-columns: 1fr; }
+      .chart-panel { min-height: 210px; }
+      .chart { height: 128px; }
+      .lower-grid { grid-template-columns: 1fr; }
+      .orders-panel { min-height: 300px; }
+      .inventory-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .inventory-heading { align-items: flex-start; }
+      .inventory-heading-actions { flex-direction: column; }
+      .purchased-layout { grid-template-columns: 1fr; }
+      .purchase-search { width: min(220px, 38vw); }
+      .stock-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .stock-insights { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .top-selling-panel { grid-column: 1 / -1; }
+      .topbar { padding-right: 12px; }
+      .star-button, .star-count, .outline-button { display: none; }
+    }
+    @media (max-width: 520px) {
+      :root { --sidebar-width: 0px; }
+      .sidebar { position: static; display: flex; width: 100%; height: auto; align-items: center; padding: 7px 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .brand { justify-content: flex-start; margin: 0 12px 0 0; }
+      .brand-name { display: inline; }
+      .nav { display: flex; flex: 1; justify-content: flex-end; gap: 4px; }
+      .nav-link { width: 30px; min-height: 30px; }
+      .nav-link span:not(.nav-icon), .nav-label, .nav-link:not(.active):nth-of-type(n+4) { display: none; }
+      .workspace { margin-left: 0; }
+      .topbar { height: 40px; padding: 0 13px; }
+      .top-actions { gap: 5px; }
+      .search { width: 112px; }
+      main { padding: 7px 10px 12px; }
+      .page-heading { margin-left: 2px; margin-bottom: 14px; }
+      .stats-grid { gap: 8px; margin-bottom: 10px; }
+      .stat-card { min-height: 78px; padding-left: 9px; }
+      .stat-icon { width: 29px; height: 29px; }
+      .charts-grid { gap: 10px; margin-bottom: 10px; }
+      .lower-grid { gap: 10px; }
+      .projects-panel { overflow-x: auto; }
+      .projects-table { min-width: 530px; }
+      .projects-panel .panel-heading { padding-bottom: 8px; }
+      .inventory-view { padding-top: 6px; }
+      .inventory-heading { flex-direction: column; gap: 12px; margin-left: 2px; }
+      .inventory-heading-actions { width: 100%; flex-direction: row; }
+      .inventory-heading-actions button { flex: 1; }
+      .inventory-toolbar { align-items: flex-start; flex-direction: column; }
+      .inventory-toolbar-actions { width: 100%; }
+      .inventory-search { width: 100%; flex: 1; }
+      .category-filter { max-width: 45%; }
+      .inventory-table { min-width: 990px; }
+      .product-fields { grid-template-columns: 1fr; }
+      .purchased-view { padding-top: 6px; }
+      .purchased-heading { align-items: flex-start; flex-direction: column; margin-left: 2px; }
+      .purchase-summary { gap: 7px; }
+      .purchase-metric { padding: 10px; }
+      .purchase-metric-value { font-size: 14px; }
+      .purchase-toolbar { align-items: flex-start; flex-direction: column; }
+      .purchase-toolbar-tools { width: 100%; }
+      .purchase-search { width: 100%; flex: 1; }
+      .purchase-filter { max-width: 45%; }
+      .stock-view { padding-top: 6px; }
+      .stock-heading { align-items: flex-start; flex-direction: column; margin-left: 2px; }
+      .stock-period-actions { width: 100%; flex-wrap: wrap; }
+      .stock-period-label { padding-left: 0; }
+      .stock-history-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .stock-history-analytics { grid-template-columns: 1fr; }
+      .stock-history-table-wrap { max-height: 44vh; }
+      .daily-view { padding-top: 6px; }
+      .daily-heading { align-items: flex-start; flex-direction: column; margin-left: 2px; }
+      .daily-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+      .daily-metric { padding: 9px; }
+      .daily-metric-value { font-size: 14px; }
+      .daily-toolbar { align-items: flex-start; flex-direction: column; }
+      .daily-tools { width: 100%; }
+      .daily-search { width: 100%; flex: 1; }
+      .daily-category { max-width: 45%; }
+    }
+    @media (max-width: 520px) {
+      .stock-history-content { padding: 12px; }
+      .stock-history-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stock-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+      .stock-metric { padding: 9px; }
+      .stock-metric-value { font-size: 14px; }
+      .stock-insights { grid-template-columns: 1fr; gap: 9px; }
+      .top-selling-panel { grid-column: auto; }
+      .stock-toolbar { align-items: flex-start; flex-direction: column; }
+      .stock-tools { width: 100%; }
+      .stock-search { width: 100%; flex: 1; }
+      .stock-filter { max-width: 45%; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">▦</span><span class="brand-name">Creative Tim</span></div>
+    <nav class="nav">
+      <a class="nav-link active" href="#dashboard" data-view="dashboard" aria-current="page"><span class="nav-icon" aria-hidden="true">▣</span><span>Dashboard</span></a>
+      <a class="nav-link" href="#inventory" data-view="inventory"><span class="nav-icon" aria-hidden="true">▤</span><span>Inventory</span></a>
+      <a class="nav-link" href="#purchased" data-view="purchased"><span class="nav-icon" aria-hidden="true">▧</span><span>Purchased</span></a>
+      <a class="nav-link" href="#instock" data-view="instock"><span class="nav-icon" aria-hidden="true">◉</span><span>InStock</span></a>
+      <a class="nav-link" href="#daily-check" data-view="daily-check"><span class="nav-icon" aria-hidden="true">♧</span><span>Daily Check</span></a>
+      <a class="nav-link" href="#requests"><span class="nav-icon" aria-hidden="true">＋</span><span>Request</span></a>
+      <a class="nav-link" href="#invoices"><span class="nav-icon" aria-hidden="true">▧</span><span>Invoice</span></a>
+      <a class="nav-link" href="#orders"><span class="nav-icon" aria-hidden="true">♧</span><span>Notifications</span></a>
+      <div class="nav-label">Account pages</div>
+      <a class="nav-link" href="#profile"><span class="nav-icon" aria-hidden="true">♙</span><span>Profile</span></a>
+      <a class="nav-link" href="#signin"><span class="nav-icon" aria-hidden="true">⇥</span><span>Sign In</span></a>
+      <a class="nav-link" href="#signup"><span class="nav-icon" aria-hidden="true">▤</span><span>Sign Up</span></a>
+    </nav>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <div class="breadcrumbs">Pages&nbsp; / &nbsp;<strong>Dashboard</strong></div>
+      <div class="top-actions">
+        <input class="search" type="search" placeholder="Type here..." aria-label="Search dashboard">
+        <button class="outline-button" type="button">Online Builder</button>
+        <button class="star-button" type="button" aria-label="Star this project">☆&nbsp; Star</button>
+        <span class="star-count" aria-label="12,113 stars">12,113</span>
+        <button class="icon-button" type="button" aria-label="Settings">⚙</button>
+        <button class="icon-button" type="button" aria-label="Notifications">♧</button>
+        <button class="icon-button" type="button" aria-label="Account">◎</button>
+      </div>
+    </header>
+
+    <main id="dashboard-view">
+      <div class="page-heading">
+        <h1>Dashboard</h1>
+        <p>Check the sales, value and bounce rate by country.</p>
+      </div>
+
+      <section class="stats-grid" aria-label="Performance summary">
+        <article class="stat-card"><span class="stat-icon" aria-hidden="true">▣</span><div class="stat-label">Today's Money</div><div class="stat-value">$53k</div><div class="stat-change"><span class="positive">+55%</span> than last week</div></article>
+        <article class="stat-card"><span class="stat-icon" aria-hidden="true">♙</span><div class="stat-label">Today's Users</div><div class="stat-value">2300</div><div class="stat-change"><span class="positive">+3%</span> than last month</div></article>
+        <article class="stat-card"><span class="stat-icon" aria-hidden="true">▥</span><div class="stat-label">Ads Views</div><div class="stat-value">3,462</div><div class="stat-change"><span class="negative">-2%</span> than yesterday</div></article>
+        <article class="stat-card"><span class="stat-icon" aria-hidden="true">▣</span><div class="stat-label">Sales</div><div class="stat-value">$103,430</div><div class="stat-change"><span class="positive">+5%</span> than yesterday</div></article>
+      </section>
+
+      <section class="charts-grid" id="charts" aria-label="Dashboard charts">
+        <article class="panel chart-panel">
+          <h2 class="panel-title">Website Views</h2><div class="panel-subtitle">Last Campaign Performance</div>
+          <svg class="chart" viewBox="0 0 460 135" role="img" aria-label="Website views by day: 50, 45, 22, 28, 50, 60, and 75">
+            <line class="gridline" x1="34" y1="16" x2="448" y2="16"/><line class="gridline" x1="34" y1="48" x2="448" y2="48"/><line class="gridline" x1="34" y1="80" x2="448" y2="80"/><line class="gridline" x1="34" y1="112" x2="448" y2="112"/>
+            <text class="axis-label" x="12" y="19">100</text><text class="axis-label" x="17" y="51">50</text><text class="axis-label" x="22" y="115">0</text>
+            <rect class="bar" x="43" y="48" width="44" height="64" rx="3"/><rect class="bar" x="104" y="54" width="44" height="58" rx="3"/><rect class="bar" x="165" y="84" width="44" height="28" rx="3"/><rect class="bar" x="226" y="78" width="44" height="34" rx="3"/><rect class="bar" x="287" y="48" width="44" height="64" rx="3"/><rect class="bar" x="348" y="39" width="44" height="73" rx="3"/><rect class="bar" x="409" y="28" width="44" height="84" rx="3"/>
+            <text class="x-label" x="61" y="131">M</text><text class="x-label" x="122" y="131">T</text><text class="x-label" x="183" y="131">W</text><text class="x-label" x="244" y="131">T</text><text class="x-label" x="305" y="131">F</text><text class="x-label" x="366" y="131">S</text><text class="x-label" x="427" y="131">S</text>
+          </svg>
+          <div class="panel-foot">◷ campaign sent 2 days ago</div>
+        </article>
+
+        <article class="panel chart-panel">
+          <h2 class="panel-title">Daily Sales</h2><div class="panel-subtitle">(+15%) increase in today sales.</div>
+          <svg class="chart" viewBox="0 0 460 135" role="img" aria-label="Daily sales trend across the year">
+            <line class="gridline" x1="28" y1="16" x2="450" y2="16"/><line class="gridline" x1="28" y1="40" x2="450" y2="40"/><line class="gridline" x1="28" y1="64" x2="450" y2="64"/><line class="gridline" x1="28" y1="88" x2="450" y2="88"/><line class="gridline" x1="28" y1="112" x2="450" y2="112"/>
+            <text class="axis-label" x="4" y="19">600</text><text class="axis-label" x="4" y="43">400</text><text class="axis-label" x="4" y="67">200</text><text class="axis-label" x="13" y="115">0</text>
+            <polyline class="line" points="31,99 68,84 105,97 142,49 179,81 216,59 253,78 290,91 327,103 364,75 401,73 438,86"/>
+            <circle class="dot" cx="31" cy="99" r="2.5"/><circle class="dot" cx="68" cy="84" r="2.5"/><circle class="dot" cx="105" cy="97" r="2.5"/><circle class="dot" cx="142" cy="49" r="2.5"/><circle class="dot" cx="179" cy="81" r="2.5"/><circle class="dot" cx="216" cy="59" r="2.5"/><circle class="dot" cx="253" cy="78" r="2.5"/><circle class="dot" cx="290" cy="91" r="2.5"/><circle class="dot" cx="327" cy="103" r="2.5"/><circle class="dot" cx="364" cy="75" r="2.5"/><circle class="dot" cx="401" cy="73" r="2.5"/><circle class="dot" cx="438" cy="86" r="2.5"/>
+            <text class="x-label" x="29" y="131">J</text><text class="x-label" x="66" y="131">F</text><text class="x-label" x="103" y="131">M</text><text class="x-label" x="140" y="131">A</text><text class="x-label" x="177" y="131">M</text><text class="x-label" x="214" y="131">J</text><text class="x-label" x="251" y="131">J</text><text class="x-label" x="288" y="131">A</text><text class="x-label" x="325" y="131">S</text><text class="x-label" x="362" y="131">O</text><text class="x-label" x="399" y="131">N</text><text class="x-label" x="436" y="131">D</text>
+          </svg>
+          <div class="panel-foot">◷ updated 4 min ago</div>
+        </article>
+
+        <article class="panel chart-panel">
+          <h2 class="panel-title">Completed Tasks</h2><div class="panel-subtitle">Last Campaign Performance</div>
+          <svg class="chart" viewBox="0 0 460 135" role="img" aria-label="Completed tasks from April to December">
+            <line class="gridline" x1="30" y1="16" x2="450" y2="16"/><line class="gridline" x1="30" y1="40" x2="450" y2="40"/><line class="gridline" x1="30" y1="64" x2="450" y2="64"/><line class="gridline" x1="30" y1="88" x2="450" y2="88"/><line class="gridline" x1="30" y1="112" x2="450" y2="112"/>
+            <text class="axis-label" x="5" y="19">600</text><text class="axis-label" x="5" y="43">400</text><text class="axis-label" x="5" y="67">200</text><text class="axis-label" x="14" y="115">0</text>
+            <polyline class="line" points="31,107 83,108 135,73 187,82 239,42 291,79 343,54 395,81 447,42"/>
+            <circle class="dot" cx="31" cy="107" r="2.5"/><circle class="dot" cx="83" cy="108" r="2.5"/><circle class="dot" cx="135" cy="73" r="2.5"/><circle class="dot" cx="187" cy="82" r="2.5"/><circle class="dot" cx="239" cy="42" r="2.5"/><circle class="dot" cx="291" cy="79" r="2.5"/><circle class="dot" cx="343" cy="54" r="2.5"/><circle class="dot" cx="395" cy="81" r="2.5"/><circle class="dot" cx="447" cy="42" r="2.5"/>
+            <text class="x-label" x="27" y="131">Apr</text><text class="x-label" x="78" y="131">May</text><text class="x-label" x="130" y="131">Jun</text><text class="x-label" x="182" y="131">Jul</text><text class="x-label" x="234" y="131">Aug</text><text class="x-label" x="286" y="131">Sep</text><text class="x-label" x="338" y="131">Oct</text><text class="x-label" x="390" y="131">Nov</text><text class="x-label" x="442" y="131">Dec</text>
+          </svg>
+          <div class="panel-foot">◷ just updated</div>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel projects-panel" id="projects">
+          <div class="panel-heading"><h2 class="panel-title">Projects</h2><div class="panel-subtitle">30 done this month</div></div>
+          <table class="projects-table">
+            <thead><tr><th>Companies</th><th>Members</th><th>Budget</th><th>Completion</th></tr></thead>
+            <tbody>
+              <tr><td><div class="company"><span class="company-mark mark-xd">Xd</span>Material XD Version</div></td><td><div class="avatars" aria-label="4 members"><span class="avatar">A</span><span class="avatar">M</span><span class="avatar">J</span><span class="avatar">S</span></div></td><td>$14,000</td><td><span class="completion-label">60%</span><div class="progress"><span style="width:60%"></span></div></td></tr>
+              <tr><td><div class="company"><span class="company-mark mark-at">▲</span>Add Progress Track</div></td><td><div class="avatars" aria-label="2 members"><span class="avatar">L</span><span class="avatar">M</span></div></td><td>$3,000</td><td><span class="completion-label">10%</span><div class="progress"><span style="width:10%"></span></div></td></tr>
+              <tr><td><div class="company"><span class="company-mark mark-slack">✣</span>Fix Platform Errors</div></td><td><div class="avatars" aria-label="2 members"><span class="avatar">N</span><span class="avatar">J</span></div></td><td>Not set</td><td><span class="completion-label">100%</span><div class="progress complete"><span style="width:100%"></span></div></td></tr>
+              <tr><td><div class="company"><span class="company-mark mark-spotify">≋</span>Launch our Mobile App</div></td><td><div class="avatars" aria-label="4 members"><span class="avatar">A</span><span class="avatar">S</span><span class="avatar">L</span><span class="avatar">M</span></div></td><td>$20,500</td><td><span class="completion-label">100%</span><div class="progress complete"><span style="width:100%"></span></div></td></tr>
+              <tr><td><div class="company"><span class="company-mark mark-diamond"></span>Add the New Pricing Page</div></td><td><div class="avatars" aria-label="1 member"><span class="avatar">D</span></div></td><td>$500</td><td><span class="completion-label">25%</span><div class="progress"><span style="width:25%"></span></div></td></tr>
+              <tr><td><div class="company"><span class="company-mark mark-linkedin">in</span>Redesign New Online Shop</div></td><td><div class="avatars" aria-label="2 members"><span class="avatar">M</span><span class="avatar">J</span></div></td><td>$2,000</td><td><span class="completion-label">40%</span><div class="progress"><span style="width:40%"></span></div></td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel orders-panel" id="orders">
+          <div class="panel-heading"><h2 class="panel-title">Orders overview</h2><div class="panel-subtitle">24% this month</div></div>
+          <div class="timeline">
+            <div class="event"><span class="event-icon" aria-hidden="true">♧</span><div><div class="event-title">$2400, Design changes</div><div class="event-time">22 DEC 7:20 PM</div></div></div>
+            <div class="event"><span class="event-icon" aria-hidden="true">‹›</span><div><div class="event-title">New order #1832412</div><div class="event-time">21 DEC 11 PM</div></div></div>
+            <div class="event"><span class="event-icon" aria-hidden="true">⚒</span><div><div class="event-title">Server payments for April</div><div class="event-time">21 DEC 9:34 PM</div></div></div>
+            <div class="event"><span class="event-icon" aria-hidden="true">▤</span><div><div class="event-title">New card added for order #4395133</div><div class="event-time">20 DEC 2:20 AM</div></div></div>
+            <div class="event"><span class="event-icon" aria-hidden="true">⌑</span><div><div class="event-title">Unlock packages for development</div><div class="event-time">18 DEC 4:54 AM</div></div></div>
+            <div class="event"><span class="event-icon" aria-hidden="true">▣</span><div><div class="event-title">New order #9583120</div><div class="event-time">17 DEC</div></div></div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <main class="inventory-view" id="inventory-view" hidden>
+      <div class="inventory-heading">
+        <div>
+          <p class="inventory-kicker">Inventory setting</p>
+          <h1>Inventory</h1>
+          <p>Product list and stock pricing across your store.</p>
+        </div>
+        <div class="inventory-heading-actions">
+          <button class="inventory-button primary" id="open-product-dialog" type="button">＋ Add Product</button>
+        </div>
+      </div>
+
+      <section class="inventory-summary" aria-label="Inventory summary">
+        <article class="inventory-metric"><div class="inventory-metric-label">Products</div><div class="inventory-metric-value" id="product-count">22</div></article>
+        <article class="inventory-metric"><div class="inventory-metric-label">Categories</div><div class="inventory-metric-value" id="category-count">3</div></article>
+        <article class="inventory-metric"><div class="inventory-metric-label">Total income</div><div class="inventory-metric-value" id="summary-income">1,023,300៛</div></article>
+        <article class="inventory-metric"><div class="inventory-metric-label">Net profit</div><div class="inventory-metric-value" id="summary-profit">227,524៛</div></article>
+      </section>
+
+      <section class="inventory-surface" aria-labelledby="inventory-list-title">
+        <div class="inventory-toolbar">
+          <div>
+            <h2 class="inventory-toolbar-title" id="inventory-list-title">All products</h2>
+            <span class="inventory-count" id="visible-product-count">22 items</span>
+          </div>
+          <div class="inventory-toolbar-actions">
+            <input class="inventory-search" id="inventory-search" type="search" placeholder="Search products..." aria-label="Search inventory">
+            <select class="category-filter" id="category-filter" aria-label="Filter by category">
+              <option value="all">All categories</option>
+              <option value="Drink">Drink</option>
+              <option value="Milk & Jelly">Milk &amp; Jelly</option>
+              <option value="Noodle">Noodle</option>
+            </select>
+          </div>
+        </div>
+        <div class="inventory-table-wrap">
+          <table class="inventory-table">
+            <thead><tr><th>No.</th><th>Code</th><th>Product / Item Name</th><th>Package</th><th class="number">Qty / Case</th><th class="number">Cost Price</th><th class="number">Selling Price</th><th class="number">Income / Unit</th><th class="number">Total Income</th><th class="number">Net Profit</th></tr></thead>
+            <tbody id="inventory-rows"></tbody>
+            <tfoot><tr><td colspan="6">Totals</td><td class="number" id="total-selling">60,800៛</td><td class="number" id="total-margin">14,429៛</td><td class="number" id="total-income">1,023,300៛</td><td class="number" id="total-profit">227,524៛</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="inventory-empty" id="inventory-empty">No products match your search.</div>
+      </section>
+    </main>
+
+    <main class="purchased-view" id="purchased-view" hidden>
+      <div class="purchased-heading">
+        <div>
+          <h1>Purchased</h1>
+          <p>Purchase ledger and stock totals from July.</p>
+        </div>
+        <button class="inventory-button primary" id="open-purchase-dialog" type="button">＋ Add Purchase</button>
+      </div>
+
+      <section class="purchase-summary" aria-label="Purchase summary">
+        <article class="purchase-metric"><div class="purchase-metric-label">Products tracked</div><div class="purchase-metric-value" id="purchase-product-count">22</div></article>
+        <article class="purchase-metric"><div class="purchase-metric-label">Purchased quantity</div><div class="purchase-metric-value" id="purchase-unit-count">1,301</div></article>
+        <article class="purchase-metric"><div class="purchase-metric-label">Total purchase value</div><div class="purchase-metric-value" id="purchase-total-value">1,241,347៛</div></article>
+      </section>
+
+      <section class="purchased-layout">
+        <article class="purchase-list-panel">
+          <div class="purchase-toolbar">
+            <div><h2>Order list</h2><p id="purchase-visible-count">22 product records</p></div>
+            <div class="purchase-toolbar-tools">
+              <input class="purchase-search" id="purchase-search" type="search" placeholder="Search products" aria-label="Search purchases">
+              <select class="purchase-filter" id="purchase-filter" aria-label="Filter purchases by category">
+                <option value="all">All categories</option><option>Drink</option><option>Milk &amp; Jelly</option><option>Noodle</option>
+              </select>
+            </div>
+          </div>
+          <div class="purchase-table-wrap">
+            <table class="purchase-table">
+              <thead><tr><th>No.</th><th>Code</th><th>Product</th><th>Unit</th><th class="number">Total Qty</th><th class="number">Total Price</th><th>Status</th></tr></thead>
+              <tbody id="purchase-rows"></tbody>
+              <tfoot><tr><td colspan="4">Total</td><td class="number" id="purchase-total-quantity">1,301</td><td class="number" id="purchase-total-footer">1,241,347៛</td><td></td></tr></tfoot>
+            </table>
+          </div>
+          <div class="purchase-empty" id="purchase-empty">No purchase records match your search.</div>
+        </article>
+
+        <aside class="purchase-detail-panel" aria-labelledby="purchase-detail-title">
+          <div class="purchase-detail-head">
+            <div><h2 id="purchase-detail-title">Provida (Big)</h2><div class="purchase-detail-code" id="purchase-detail-code">Product 1003</div></div>
+            <span class="purchase-state" id="purchase-detail-status">Recorded</span>
+          </div>
+          <h3 class="purchase-section-title">Purchase details</h3>
+          <div class="purchase-facts">
+            <div class="purchase-fact"><span>Category</span><strong id="purchase-detail-category">Drink</strong></div>
+            <div class="purchase-fact"><span>Unit</span><strong id="purchase-detail-unit">Bottle</strong></div>
+            <div class="purchase-fact"><span>Total quantity</span><strong id="purchase-detail-quantity">183</strong></div>
+            <div class="purchase-fact"><span>Total price</span><strong id="purchase-detail-price">158,418៛</strong></div>
+          </div>
+          <h3 class="purchase-section-title">Stock and purchase periods</h3>
+          <div class="purchase-periods" id="purchase-periods"></div>
+        </aside>
+      </section>
+    </main>
+
+    <main class="stock-view" id="instock-view" hidden>
+      <div class="stock-heading">
+        <div>
+          <p class="stock-kicker">Store operations</p>
+          <h1>Stock Management</h1>
+          <p>Stock position, sales performance, and profitability by product.</p>
+        </div>
+        <div class="stock-period-actions">
+          <span class="stock-period-label" id="stock-month-label">November 2026</span>
+          <button class="stock-period-button" id="open-stock-history" type="button">History</button>
+          <button class="stock-period-button primary" id="update-stock-month" type="button" title="Archive this month and carry remaining stock forward">Update month</button>
+        </div>
+      </div>
+
+      <section class="stock-metrics" aria-label="Stock performance summary">
+        <article class="stock-metric"><div class="stock-metric-label">Products</div><div class="stock-metric-value" id="stock-sku-count">22</div><div class="stock-metric-note">Across 3 categories</div></article>
+        <article class="stock-metric"><div class="stock-metric-label">Total quantity</div><div class="stock-metric-value" id="stock-quantity-count">1,301</div><div class="stock-metric-note">Units received</div></article>
+        <article class="stock-metric"><div class="stock-metric-label">In stock</div><div class="stock-metric-value" id="stock-on-hand-count">599</div><div class="stock-metric-note">Available units</div></article>
+        <article class="stock-metric"><div class="stock-metric-label">Sold out</div><div class="stock-metric-value" id="stock-sold-count">702</div><div class="stock-metric-note">Units sold</div></article>
+        <article class="stock-metric"><div class="stock-metric-label">Sales revenue</div><div class="stock-metric-value" id="stock-revenue-total">1,335,800៛</div><div class="stock-metric-note">Retail value sold</div></article>
+        <article class="stock-metric"><div class="stock-metric-label">Gross profit</div><div class="stock-metric-value" id="stock-profit-total">452,876៛</div><div class="stock-metric-note" id="stock-margin-rate">33.9% gross margin</div></article>
+      </section>
+
+      <section class="stock-insights" aria-label="Stock analytics">
+        <article class="stock-panel">
+          <h2>Sales by category</h2><p class="stock-panel-subtitle">Share of recorded retail sales</p>
+          <div class="category-mix-content">
+            <div class="stock-donut" id="stock-donut" role="img" aria-label="Sales revenue mix by category"><div class="stock-donut-hole"><strong id="stock-sales-total-short">1.34M</strong><span>៛ total sales</span></div></div>
+            <div class="category-legend" id="stock-category-legend"></div>
+          </div>
+        </article>
+        <article class="stock-panel">
+          <h2>Stock alerts</h2><p class="stock-panel-subtitle">Items that may need attention</p>
+          <div class="stock-alert-list">
+            <div class="stock-alert negative-alert"><span class="stock-alert-label">Negative stock</span><strong class="stock-alert-count" id="negative-stock-count">1</strong></div>
+            <div class="stock-alert"><span class="stock-alert-label">Out of stock</span><strong class="stock-alert-count" id="empty-stock-count">10</strong></div>
+            <div class="stock-alert"><span class="stock-alert-label">Low stock (1-5 units)</span><strong class="stock-alert-count" id="low-stock-count">1</strong></div>
+          </div>
+        </article>
+        <article class="stock-panel top-selling-panel">
+          <h2>Top-selling products</h2><p class="stock-panel-subtitle">Units sold</p>
+          <div class="top-sellers" id="top-sellers"></div>
+        </article>
+      </section>
+
+      <section class="stock-table-panel" aria-labelledby="stock-table-title">
+        <div class="stock-toolbar">
+          <div><h2 id="stock-table-title">Product stock details</h2><p id="stock-visible-count">22 products</p></div>
+          <div class="stock-tools">
+            <input class="stock-search" id="stock-search" type="search" placeholder="Search products" aria-label="Search stock products">
+            <select class="stock-filter" id="stock-filter" aria-label="Filter stock by category">
+              <option value="all">All categories</option><option>Drink</option><option>Milk &amp; Jelly</option><option>Noodle</option>
+            </select>
+          </div>
+        </div>
+        <div class="stock-table-wrap">
+          <table class="stock-table">
+            <thead><tr><th>No.</th><th>Code</th><th>Product / Item Name</th><th>Unit</th><th class="number">Total Qty</th><th class="number">In Stock</th><th class="number">Sold Out</th><th class="number">Retail Price</th><th class="number">Total Price</th><th class="number">Cost Price</th><th class="number">Income / Unit</th><th class="number">Profit</th><th>Status</th></tr></thead>
+            <tbody id="stock-rows"></tbody>
+            <tfoot><tr><td colspan="4">Totals</td><td class="number" id="stock-total-quantity">1,301</td><td class="number" id="stock-total-on-hand">599</td><td class="number" id="stock-total-sold">702</td><td></td><td class="number" id="stock-total-revenue">1,335,800៛</td><td></td><td></td><td class="number" id="stock-total-profit">452,876៛</td><td></td></tr></tfoot>
+          </table>
+        </div>
+        <div class="stock-empty" id="stock-empty">No stock items match your search.</div>
+      </section>
+    </main>
+
+    <main class="daily-view" id="daily-check-view" hidden>
+      <div class="daily-heading">
+        <div><h1>Daily Check</h1><p>Daily sales, stock movement, and cash reconciliation.</p></div>
+        <span class="daily-date" id="daily-check-date">November 6, 2026</span>
+      </div>
+
+      <section class="daily-summary" aria-label="Daily check summary">
+        <article class="daily-metric"><div class="daily-metric-label">Daily income</div><div class="daily-metric-value" id="daily-income-total">44,500៛</div><div class="daily-metric-note">From recorded product sales</div></article>
+        <article class="daily-metric"><div class="daily-metric-label">Total income</div><div class="daily-metric-value" id="daily-ledger-total">2,363,573៛</div><div class="daily-metric-note">Ledger balance from sheet</div></article>
+        <article class="daily-metric"><div class="daily-metric-label">ABA</div><div class="daily-metric-value" id="daily-aba-total">2,401,073៛</div><div class="daily-metric-note">Recorded account balance</div></article>
+        <article class="daily-metric"><div class="daily-metric-label">Profit / loss</div><div class="daily-metric-value loss" id="daily-profit-loss">-7,000៛</div><div class="daily-metric-note">Reported for this check</div></article>
+      </section>
+
+      <section class="daily-ledger" aria-labelledby="daily-ledger-heading">
+        <div class="daily-toolbar">
+          <div><h2 id="daily-ledger-heading">Product daily check</h2><p id="daily-row-count">22 products</p></div>
+          <div class="daily-tools">
+            <input class="daily-search" id="daily-search" type="search" placeholder="Search products" aria-label="Search daily check products">
+            <select class="daily-category" id="daily-category" aria-label="Filter by product category">
+              <option value="all">All categories</option><option>Drink</option><option>Milk &amp; Jelly</option><option>Noodle</option>
+            </select>
+          </div>
+        </div>
+        <div class="daily-table-wrap">
+          <table class="daily-table">
+            <thead><tr><th>No.</th><th>Code</th><th>Product / Item Name</th><th>Unit</th><th class="number">Unit Price</th><th class="number">In Stock</th><th class="number">Total Income</th><th class="number">Total Adding</th><th class="number for-sale-heading">For Sale</th><th class="number">Sold Out</th><th class="number">Income</th><th class="number">Adding</th></tr></thead>
+            <tbody id="daily-check-rows"></tbody>
+            <tfoot><tr><td colspan="10">Cash on hand</td><td class="number" id="daily-table-income">44,500៛</td><td></td></tr></tfoot>
+          </table>
+        </div>
+        <div class="daily-empty" id="daily-empty">No products match your search.</div>
+        <div class="daily-toolbar-note"><strong>Sheet figures:</strong> Total income 2,363,573៛ · ABA 2,401,073៛ · Cash on hand 44,500៛ · Profit/Loss -7,000៛</div>
+      </section>
+    </main>
+
+    <dialog class="stock-history-dialog" id="stock-history-dialog">
+      <div class="stock-history-content">
+        <div class="stock-history-heading">
+          <div><h2>Monthly stock history</h2><p>Archived totals from completed reporting months.</p></div>
+          <button class="icon-button" id="close-stock-history" type="button" aria-label="Close monthly stock history">×</button>
+        </div>
+        <div class="stock-history-list" id="stock-history-list" role="group" aria-label="Archived months"></div>
+        <div class="stock-history-empty" id="stock-history-empty">No completed months yet.</div>
+        <section class="stock-history-snapshot" id="stock-history-snapshot" hidden>
+          <div class="stock-history-month-heading"><h3 id="stock-history-month-title"></h3><span>Month-end snapshot</span></div>
+          <div class="stock-history-metrics" id="stock-history-metrics"></div>
+          <div class="stock-history-analytics" id="stock-history-analytics">
+            <section class="stock-history-insight"><h4>Sales by category</h4><div class="stock-history-insight-content" id="stock-history-categories"></div></section>
+            <section class="stock-history-insight"><h4>Stock alerts</h4><div class="stock-history-insight-content" id="stock-history-alerts"></div></section>
+            <section class="stock-history-insight"><h4>Top-selling products</h4><div class="stock-history-insight-content" id="stock-history-sellers"></div></section>
+          </div>
+          <div class="stock-history-table-wrap" id="stock-history-table-wrap">
+            <table class="stock-table stock-history-table">
+              <thead><tr><th>No.</th><th>Code</th><th>Product / Item Name</th><th>Unit</th><th class="number">Total Qty</th><th class="number">In Stock</th><th class="number">Sold Out</th><th class="number">Retail Price</th><th class="number">Total Price</th><th class="number">Cost Price</th><th class="number">Income / Unit</th><th class="number">Profit</th><th>Status</th></tr></thead>
+              <tbody id="stock-history-rows"></tbody>
+              <tfoot><tr><td colspan="4">Totals</td><td class="number" id="history-total-quantity"></td><td class="number" id="history-total-on-hand"></td><td class="number" id="history-total-sold"></td><td></td><td class="number" id="history-total-revenue"></td><td></td><td></td><td class="number" id="history-total-profit"></td><td></td></tr></tfoot>
+            </table>
+          </div>
+          <div class="stock-history-empty stock-history-legacy" id="stock-history-legacy" hidden>This older archive only contains monthly totals; product-level details were not saved.</div>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog class="product-dialog purchase-dialog" id="purchase-dialog">
+      <form class="product-form" id="purchase-form">
+        <h2>Add Purchase</h2>
+        <p>Record a quantity and price in a purchase period.</p>
+        <div class="product-fields">
+          <label>Product<select name="product" id="purchase-product-select" required></select></label>
+          <label>Purchase period<select name="period" required><option value="0">Period 1</option><option value="1">Period 2</option><option value="2">Period 3</option></select></label>
+          <label>Quantity<input name="quantity" type="number" min="1" required></label>
+          <label>Unit price (៛)<input name="price" type="number" min="0" required></label>
+        </div>
+        <div class="product-form-actions">
+          <button class="inventory-button" id="cancel-purchase" type="button">Cancel</button>
+          <button class="inventory-button primary" type="submit">Save purchase</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="product-dialog" id="product-dialog">
+      <form class="product-form" id="product-form">
+        <h2>Add Product</h2>
+        <p>Enter the product and per-case pricing details.</p>
+        <div class="product-fields">
+          <label>Product code<input name="code" required inputmode="numeric" placeholder="1021"></label>
+          <label>Product name<input name="name" required placeholder="Product name"></label>
+          <label>Category<select name="category" required><option>Drink</option><option>Milk &amp; Jelly</option><option>Noodle</option></select></label>
+          <label>Package<input name="package" required placeholder="Bottle, Can, Package"></label>
+          <label>Quantity per case<input name="quantity" type="number" min="1" required></label>
+          <label>Cost price<input name="cost" type="number" min="0" required></label>
+          <label>Selling price<input name="selling" type="number" min="0" required></label>
+        </div>
+        <div class="product-form-actions">
+          <button class="inventory-button" id="cancel-product" type="button">Cancel</button>
+          <button class="inventory-button primary" type="submit">Add product</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+  <script>
+    const dashboardView = document.querySelector('#dashboard-view');
+    const inventoryView = document.querySelector('#inventory-view');
+    const purchasedView = document.querySelector('#purchased-view');
+    const inStockView = document.querySelector('#instock-view');
+    const dailyCheckView = document.querySelector('#daily-check-view');
+    const viewLinks = [...document.querySelectorAll('[data-view]')];
+    const breadcrumbTitle = document.querySelector('.breadcrumbs strong');
+    const dashboardSearch = document.querySelector('.search');
+    const projectRows = [...document.querySelectorAll('.projects-table tbody tr')];
+    const orderEvents = [...document.querySelectorAll('.event')];
+    const inventorySearch = document.querySelector('#inventory-search');
+    const categoryFilter = document.querySelector('#category-filter');
+    const inventoryBody = document.querySelector('#inventory-rows');
+    const purchaseSearch = document.querySelector('#purchase-search');
+    const purchaseFilter = document.querySelector('#purchase-filter');
+    const purchaseBody = document.querySelector('#purchase-rows');
+    const purchaseDialog = document.querySelector('#purchase-dialog');
+    const purchaseForm = document.querySelector('#purchase-form');
+    const purchaseProductSelect = document.querySelector('#purchase-product-select');
+    const stockSearch = document.querySelector('#stock-search');
+    const stockFilter = document.querySelector('#stock-filter');
+    const stockBody = document.querySelector('#stock-rows');
+    const dailySearch = document.querySelector('#daily-search');
+    const dailyCategory = document.querySelector('#daily-category');
+    const dailyRows = document.querySelector('#daily-check-rows');
+    const productDialog = document.querySelector('#product-dialog');
+    const productForm = document.querySelector('#product-form');
+    const inventoryStorageKey = 'mini-store-inventory-additions';
+    const purchaseStorageKey = 'mini-store-purchase-records';
+    const baseInventory = [
+      { category: 'Drink', code: '1001', name: 'Kulen (Big)', package: 'Bottle', quantity: 12, cost: 2667, selling: 3000, margin: 333, income: 36000, profit: 4000 },
+      { category: 'Drink', code: '1002', name: 'Kulen (Small)', package: 'Bottle', quantity: 24, cost: 1333, selling: 2000, margin: 667, income: 48000, profit: 16000 },
+      { category: 'Drink', code: '1003', name: 'Provida (Big)', package: 'Bottle', quantity: 12, cost: 1305, selling: 2000, margin: 695, income: 24000, profit: 8340 },
+      { category: 'Drink', code: '1004', name: 'Provida (Small)', package: 'Bottle', quantity: 24, cost: 510, selling: 1000, margin: 490, income: 24000, profit: 11760 },
+      { category: 'Drink', code: '1005', name: 'Coca cola', package: 'Can', quantity: 24, cost: 1372, selling: 2000, margin: 628, income: 48000, profit: 15072 },
+      { category: 'Drink', code: '1006', name: 'Ize', package: 'Bottle', quantity: 24, cost: 1607, selling: 2500, margin: 893, income: 60000, profit: 21432 },
+      { category: 'Drink', code: '1007', name: 'Chinese Tea', package: 'Bottle', quantity: 24, cost: 2275, selling: 3000, margin: 725, income: 72000, profit: 17400 },
+      { category: 'Drink', code: '1008', name: "Yeo's", package: 'Can', quantity: 24, cost: 1563, selling: 2000, margin: 437, income: 48000, profit: 10485 },
+      { category: 'Drink', code: '1009', name: 'Aloe vera juice', package: 'Bottle', quantity: 6, cost: 1805, selling: 2500, margin: 695, income: 15000, profit: 4172 },
+      { category: 'Drink', code: '1010', name: 'Water Vitamic C 500ML', package: 'Package', quantity: 6, cost: 2870, selling: 3500, margin: 630, income: 21000, profit: 3780 },
+      { category: 'Drink', code: '1011', name: 'Pocari Sweat', package: 'Bottle', quantity: 24, cost: 3025, selling: 3500, margin: 475, income: 84000, profit: 11400 },
+      { category: 'Milk & Jelly', code: '1010', name: 'Fruit Yogurt', package: 'Bottle', quantity: 12, cost: 3212, selling: 4000, margin: 788, income: 48000, profit: 9456 },
+      { category: 'Milk & Jelly', code: '1011', name: 'Yogurt Jelly', package: 'Package', quantity: 12, cost: 3569, selling: 4000, margin: 431, income: 48000, profit: 5172 },
+      { category: 'Milk & Jelly', code: '1012', name: 'Yogurt 28 + Drink', package: 'Package', quantity: 12, cost: 3212, selling: 3700, margin: 488, income: 44400, profit: 5856 },
+      { category: 'Milk & Jelly', code: '1013', name: 'Dalat Straw Milk 180 ML', package: 'Bottle', quantity: 48, cost: 2424, selling: 2000, margin: -424, income: 96000, profit: -20334 },
+      { category: 'Milk & Jelly', code: '1014', name: 'Dalat Choco Milk 180 ML', package: 'Bottle', quantity: 1, cost: 2424, selling: 5500, margin: 3076, income: 5500, profit: 3076 },
+      { category: 'Milk & Jelly', code: '1015', name: 'Dalat Sweet Milk 450 Ml', package: 'Bottle', quantity: 1, cost: 4627, selling: 5000, margin: 373, income: 5000, profit: 373 },
+      { category: 'Milk & Jelly', code: '1016', name: 'Angkor Milk', package: 'Bottle', quantity: 48, cost: 1045, selling: 1700, margin: 655, income: 81600, profit: 31440 },
+      { category: 'Milk & Jelly', code: '1017', name: 'Yogurt', package: 'Package', quantity: 48, cost: 1087, selling: 1700, margin: 613, income: 81600, profit: 29424 },
+      { category: 'Milk & Jelly', code: '1018', name: 'Jele Jelly', package: 'Package', quantity: 36, cost: 1139, selling: 1700, margin: 561, income: 61200, profit: 20200 },
+      { category: 'Noodle', code: '1019', name: 'Noodle (Mic Chet)', package: 'Package', quantity: 24, cost: 1843, selling: 2500, margin: 657, income: 60000, profit: 15768 },
+      { category: 'Noodle', code: '1020', name: 'Noodle (Pop Me)', package: 'Package', quantity: 6, cost: 1458, selling: 2000, margin: 542, income: 12000, profit: 3252 }
+    ];
+    let stockData = [
+      { category: 'Drink', code: '1001', name: 'Kulen (Big)', unit: 'Bottle', total: 0, onHand: 0, sold: 0, retail: 3000, revenue: null, cost: 2667, income: 333, profit: null },
+      { category: 'Drink', code: '1002', name: 'Kulen (Small)', unit: 'Bottle', total: 0, onHand: 0, sold: 0, retail: 2000, revenue: null, cost: 1333, income: 667, profit: null },
+      { category: 'Drink', code: '1003', name: 'Provida (Big)', unit: 'Bottle', total: 183, onHand: 38, sold: 145, retail: 2000, revenue: 290000, cost: 1305, income: 695, profit: 100775 },
+      { category: 'Drink', code: '1004', name: 'Provida (Small)', unit: 'Bottle', total: 63, onHand: -2, sold: 65, retail: 1000, revenue: 65000, cost: 510, income: 490, profit: 31850 },
+      { category: 'Drink', code: '1005', name: 'Coca cola', unit: 'Can', total: 109, onHand: 92, sold: 17, retail: 2000, revenue: 34000, cost: 1372, income: 628, profit: 10676 },
+      { category: 'Drink', code: '1006', name: 'Ize', unit: 'Bottle', total: 102, onHand: 76, sold: 26, retail: 2500, revenue: 65000, cost: 1607, income: 893, profit: 23218 },
+      { category: 'Drink', code: '1007', name: 'Chinese Tea', unit: 'Bottle', total: 62, onHand: 30, sold: 32, retail: 3000, revenue: 96000, cost: 2275, income: 725, profit: 23200 },
+      { category: 'Drink', code: '1008', name: "Yeo's", unit: 'Can', total: 85, onHand: 56, sold: 29, retail: 2000, revenue: 58000, cost: 1563, income: 437, profit: 12689 },
+      { category: 'Drink', code: '1009', name: 'Aloe vera juice', unit: 'Bottle', total: 0, onHand: 0, sold: 0, retail: 2500, revenue: null, cost: 1805, income: 695, profit: null },
+      { category: 'Drink', code: '1010', name: 'Water Vitamic C 500ML', unit: 'Package', total: 0, onHand: 0, sold: 0, retail: 3500, revenue: null, cost: 2870, income: 630, profit: null },
+      { category: 'Drink', code: '1011', name: 'Pocari Sweat', unit: 'Bottle', total: 0, onHand: 0, sold: 0, retail: 3500, revenue: null, cost: 3025, income: 475, profit: null },
+      { category: 'Milk & Jelly', code: '1010', name: 'Fruit Yogurt', unit: 'Bottle', total: 22, onHand: 17, sold: 5, retail: 4000, revenue: 20000, cost: 3212, income: 788, profit: 3940 },
+      { category: 'Milk & Jelly', code: '1011', name: 'Yogurt Jelly', unit: 'Package', total: 34, onHand: 24, sold: 10, retail: 4000, revenue: 40000, cost: 3569, income: 431, profit: 4310 },
+      { category: 'Milk & Jelly', code: '1012', name: 'Yogurt 28 + Drink', unit: 'Package', total: 1, onHand: 1, sold: 0, retail: 3700, revenue: null, cost: 3212, income: 488, profit: null },
+      { category: 'Milk & Jelly', code: '1013', name: 'Dalat Straw Milk 180 ML', unit: 'Bottle', total: 0, onHand: 0, sold: 0, retail: 2000, revenue: null, cost: 2424, income: -424, profit: null },
+      { category: 'Milk & Jelly', code: '1014', name: 'Dalat Choco Milk 180 ML', unit: 'Bottle', total: 0, onHand: 0, sold: 0, retail: 5500, revenue: null, cost: 2424, income: 3076, profit: null },
+      { category: 'Milk & Jelly', code: '1015', name: 'Dalat Sweet Milk 450 Ml', unit: 'Bottle', total: 0, onHand: 0, sold: 0, retail: 5000, revenue: null, cost: 4627, income: 373, profit: null },
+      { category: 'Milk & Jelly', code: '1016', name: 'Angkor Milk', unit: 'Bottle', total: 480, onHand: 161, sold: 319, retail: 1700, revenue: 542300, cost: 1045, income: 655, profit: 208925 },
+      { category: 'Milk & Jelly', code: '1017', name: 'Yogurt', unit: 'Package', total: 0, onHand: 0, sold: 0, retail: 1700, revenue: null, cost: 1087, income: 613, profit: null },
+      { category: 'Milk & Jelly', code: '1018', name: 'Jele Jelly', unit: 'Package', total: 0, onHand: 0, sold: 0, retail: 1700, revenue: null, cost: 1139, income: 561, profit: null },
+      { category: 'Noodle', code: '1019', name: 'Noodle (Mic Chet)', unit: 'Package', total: 96, onHand: 61, sold: 35, retail: 2500, revenue: 87500, cost: 1843, income: 657, profit: 22995 },
+      { category: 'Noodle', code: '1020', name: 'Noodle (Pop Me)', unit: 'Package', total: 64, onHand: 45, sold: 19, retail: 2000, revenue: 38000, cost: 1458, income: 542, profit: 10298 }
+    ];
+    const dailyData = [
+      { category: 'Drink', code: '1001', name: 'Kulen (Big)', unit: 'Bottle', unitPrice: 3000, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Drink', code: '1002', name: 'Kulen (Small)', unit: 'Bottle', unitPrice: 2000, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Drink', code: '1003', name: 'Provida (Big)', unit: 'Bottle', unitPrice: 2000, inStock: 38, totalIncome: 290000, totalAdding: 141, forSale: 14, soldOut: 7, income: 14000, adding: 6 },
+      { category: 'Drink', code: '1004', name: 'Provida (Small)', unit: 'Bottle', unitPrice: 1000, inStock: -2, totalIncome: 65000, totalAdding: 60, forSale: 23, soldOut: 3, income: 3000, adding: null },
+      { category: 'Drink', code: '1005', name: 'Coca cola', unit: 'Can', unitPrice: 2000, inStock: 92, totalIncome: 34000, totalAdding: 18, forSale: 13, soldOut: null, income: 4000, adding: null },
+      { category: 'Drink', code: '1006', name: 'Ize', unit: 'Bottle', unitPrice: 2500, inStock: 76, totalIncome: 65000, totalAdding: 27, forSale: 9, soldOut: 3, income: 7500, adding: null },
+      { category: 'Drink', code: '1007', name: 'Chinese Tea', unit: 'Bottle', unitPrice: 3000, inStock: 30, totalIncome: 96000, totalAdding: 38, forSale: 2, soldOut: null, income: null, adding: null },
+      { category: 'Drink', code: '1008', name: "Yeo's", unit: 'Can', unitPrice: 2000, inStock: 56, totalIncome: 58000, totalAdding: 27, forSale: 14, soldOut: 2, income: 4000, adding: null },
+      { category: 'Drink', code: '1009', name: 'Aloe vera juice', unit: 'Bottle', unitPrice: 2500, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Drink', code: '1010', name: 'Water Vitamic C 500ML', unit: 'Package', unitPrice: 3500, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Drink', code: '1011', name: 'Pocari Sweat', unit: 'Bottle', unitPrice: 3500, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Milk & Jelly', code: '1010', name: 'Fruit Yogurt', unit: 'Bottle', unitPrice: 4000, inStock: 17, totalIncome: null, totalIncomeError: true, totalAdding: 0, forSale: 14, soldOut: 1, income: 4000, adding: null },
+      { category: 'Milk & Jelly', code: '1011', name: 'Yogurt Jelly', unit: 'Package', unitPrice: 4000, inStock: 24, totalIncome: 40000, totalAdding: 11, forSale: 6, soldOut: 2, income: 8000, adding: null },
+      { category: 'Milk & Jelly', code: '1012', name: 'Yogurt 28 + Drink', unit: 'Package', unitPrice: 3700, inStock: 1, totalIncome: null, totalAdding: 0, forSale: 1, soldOut: null, income: null, adding: null },
+      { category: 'Milk & Jelly', code: '1013', name: 'Dalat Straw Milk 180 ML', unit: 'Bottle', unitPrice: 2000, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Milk & Jelly', code: '1014', name: 'Dalat Choco Milk 180 ML', unit: 'Bottle', unitPrice: 5500, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Milk & Jelly', code: '1015', name: 'Dalat Sweet Milk 450 Ml', unit: 'Bottle', unitPrice: 5000, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Milk & Jelly', code: '1016', name: 'Angkor Milk', unit: 'Bottle', unitPrice: 1700, inStock: 161, totalIncome: 542300, totalAdding: 349, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Milk & Jelly', code: '1017', name: 'Yogurt', unit: 'Package', unitPrice: 1700, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Milk & Jelly', code: '1018', name: 'Jele Jelly', unit: 'Package', unitPrice: 1700, inStock: 0, totalIncome: null, totalAdding: 0, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Noodle', code: '1019', name: 'Noodle (Mic Chet)', unit: 'Package', unitPrice: 2500, inStock: 61, totalIncome: 87500, totalAdding: 45, forSale: 0, soldOut: null, income: null, adding: null },
+      { category: 'Noodle', code: '1020', name: 'Noodle (Pop Me)', unit: 'Package', unitPrice: 2000, inStock: 45, totalIncome: 38000, totalAdding: 24, forSale: 0, soldOut: null, income: null, adding: null }
+    ];
+    const stockStateKey = 'mini-store-instock-month-state';
+    const stockHistoryKey = 'mini-store-instock-month-history';
+    let stockMonth = getStockMonthKey(new Date());
+    let stockHistory = [];
+
+    function getStockMonthKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function stockMonthNumber(month) {
+      const [year, value] = month.split('-').map(Number);
+      return year * 12 + value;
+    }
+
+    function nextStockMonth(month) {
+      const [year, value] = month.split('-').map(Number);
+      const next = new Date(Date.UTC(year, value, 1));
+      return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function stockMonthName(month) {
+      return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month}-01T00:00:00Z`));
+    }
+
+    function getStockTotals(items) {
+      return items.reduce((totals, item) => ({
+        quantity: totals.quantity + item.total,
+        onHand: totals.onHand + item.onHand,
+        sold: totals.sold + item.sold,
+        revenue: totals.revenue + (item.revenue || 0),
+        profit: totals.profit + (item.profit || 0)
+      }), { quantity: 0, onHand: 0, sold: 0, revenue: 0, profit: 0 });
+    }
+
+    function saveStockMonthState() {
+      try {
+        localStorage.setItem(stockStateKey, JSON.stringify({ month: stockMonth, items: stockData }));
+        localStorage.setItem(stockHistoryKey, JSON.stringify(stockHistory));
+      } catch {
+        return false;
+      }
+      return true;
+    }
+
+    function updateStockMonth(nextMonth) {
+      while (stockMonthNumber(stockMonth) < stockMonthNumber(nextMonth)) {
+        const totals = getStockTotals(stockData);
+        if (!stockHistory.some(entry => entry.month === stockMonth)) {
+          stockHistory.unshift({ month: stockMonth, ...totals, items: stockData.map(item => ({ ...item })) });
+          stockHistory = stockHistory.slice(0, 24);
+        }
+        stockData = stockData.map(item => ({
+          ...item,
+          total: item.onHand,
+          onHand: item.onHand,
+          sold: 0,
+          revenue: null,
+          profit: null
+        }));
+        stockMonth = nextStockMonth(stockMonth);
+      }
+      saveStockMonthState();
+      document.querySelector('#stock-month-label').textContent = stockMonthName(stockMonth);
+      document.querySelector('#open-stock-history').textContent = `History (${stockHistory.length})`;
+    }
+
+    function syncStockMonthToCalendar() {
+      const currentMonth = getStockMonthKey(new Date());
+      if (stockMonthNumber(currentMonth) > stockMonthNumber(stockMonth)) {
+        updateStockMonth(currentMonth);
+        return true;
+      }
+      return false;
+    }
+
+    try {
+      const savedStockState = JSON.parse(localStorage.getItem(stockStateKey) || 'null');
+      const savedStockHistory = JSON.parse(localStorage.getItem(stockHistoryKey) || '[]');
+      if (savedStockState && Array.isArray(savedStockState.items) && savedStockState.items.length === stockData.length) {
+        stockData = savedStockState.items;
+        stockMonth = savedStockState.month || stockMonth;
+      }
+      if (Array.isArray(savedStockHistory)) stockHistory = savedStockHistory;
+    } catch {
+      stockHistory = [];
+    }
+    syncStockMonthToCalendar();
+    if (!localStorage.getItem(stockStateKey)) saveStockMonthState();
+    document.querySelector('#stock-month-label').textContent = stockMonthName(stockMonth);
+    document.querySelector('#open-stock-history').textContent = `History (${stockHistory.length})`;
+
+    let inventoryItems = [...baseInventory];
+    const purchaseAmounts = [
+      [0, null], [0, null], [183, 158418], [63, null], [109, 64992], [102, 79615],
+      [62, 138108], [85, 69054], [0, null], [0, null], [0, null], [22, null],
+      [34, null], [1, null], [0, null], [0, null], [0, null], [480, 519936],
+      [0, null], [0, null], [96, 146232], [64, 64992]
+    ];
+    const defaultPurchases = baseInventory.map((item, index) => ({
+      ...item,
+      number: index + 1,
+      totalQuantity: purchaseAmounts[index][0],
+      totalPrice: purchaseAmounts[index][1],
+      stockFromJuly: null,
+      periods: Array.from({ length: 3 }, () => ({ quantity: null, price: null, total: null }))
+    }));
+    let purchaseData = defaultPurchases;
+    let selectedPurchaseIndex = purchaseData.findIndex(item => item.totalQuantity > 0);
+
+    try {
+      const savedPurchases = JSON.parse(localStorage.getItem(purchaseStorageKey) || 'null');
+      if (Array.isArray(savedPurchases) && savedPurchases.length === defaultPurchases.length) purchaseData = savedPurchases;
+    } catch {
+      localStorage.removeItem(purchaseStorageKey);
+    }
+    selectedPurchaseIndex = purchaseData.findIndex(item => item.totalQuantity > 0);
+
+    try {
+      const savedAdditions = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]');
+      if (Array.isArray(savedAdditions)) inventoryItems.push(...savedAdditions);
+    } catch {
+      localStorage.removeItem(inventoryStorageKey);
+    }
+
+    const formatRiel = amount => `${amount < 0 ? '-' : ''}${Math.abs(amount).toLocaleString('en-US')}៛`;
+    const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+
+    function showView(view) {
+      const isInventory = view === 'inventory';
+      const isPurchased = view === 'purchased';
+      const isInStock = view === 'instock';
+      const isDailyCheck = view === 'daily-check';
+      inventoryView.hidden = !isInventory;
+      purchasedView.hidden = !isPurchased;
+      inStockView.hidden = !isInStock;
+      dailyCheckView.hidden = !isDailyCheck;
+      dashboardView.hidden = isInventory || isPurchased || isInStock || isDailyCheck;
+      breadcrumbTitle.textContent = isInventory ? 'Inventory' : isPurchased ? 'Purchased' : isInStock ? 'InStock' : isDailyCheck ? 'Daily Check' : 'Dashboard';
+      document.title = `${isInventory ? 'Inventory' : isPurchased ? 'Purchased' : isInStock ? 'InStock' : isDailyCheck ? 'Daily Check' : 'Dashboard'} | Creative Tim`;
+      viewLinks.forEach(link => {
+        const active = link.dataset.view === view;
+        link.classList.toggle('active', active);
+        if (active) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      });
+    }
+
+    viewLinks.forEach(link => link.addEventListener('click', event => {
+      event.preventDefault();
+      history.pushState(null, '', `#${link.dataset.view}`);
+      showView(link.dataset.view);
+    }));
+    window.addEventListener('popstate', () => showView(location.hash.slice(1) || 'dashboard'));
+
+    function renderInventory() {
+      const query = inventorySearch.value.trim().toLowerCase();
+      const selectedCategory = categoryFilter.value;
+      const filtered = inventoryItems.filter(item => {
+        const matchesQuery = `${item.code} ${item.name} ${item.package} ${item.category}`.toLowerCase().includes(query);
+        return matchesQuery && (selectedCategory === 'all' || item.category === selectedCategory);
+      });
+      const categories = [...new Set(inventoryItems.map(item => item.category))];
+      const visibleCategories = [...new Set(filtered.map(item => item.category))];
+
+      inventoryBody.innerHTML = visibleCategories.map(category => {
+        const categoryItems = filtered.filter(item => item.category === category);
+        const rows = categoryItems.map(item => {
+          const number = inventoryItems.indexOf(item) + 1;
+          return `<tr><td>${number}</td><td class="code">${escapeHTML(item.code)}</td><td class="product-name">${escapeHTML(item.name)}</td><td>${escapeHTML(item.package)}</td><td class="number">${item.quantity}</td><td class="number">${formatRiel(item.cost)}</td><td class="number">${formatRiel(item.selling)}</td><td class="number">${formatRiel(item.margin)}</td><td class="number">${formatRiel(item.income)}</td><td class="number">${formatRiel(item.profit)}</td></tr>`;
+        }).join('');
+        return `<tr class="group-row"><th colspan="10">${escapeHTML(category)}</th></tr>${rows}`;
+      }).join('');
+
+      const additions = inventoryItems.slice(baseInventory.length);
+      const totals = additions.reduce((sum, item) => ({
+        selling: sum.selling + item.selling,
+        margin: sum.margin + item.margin,
+        income: sum.income + item.income,
+        profit: sum.profit + item.profit
+      }), { selling: 60800, margin: 14429, income: 1023300, profit: 227524 });
+      document.querySelector('#product-count').textContent = inventoryItems.length;
+      document.querySelector('#category-count').textContent = categories.length;
+      document.querySelector('#summary-income').textContent = formatRiel(totals.income);
+      document.querySelector('#summary-profit').textContent = formatRiel(totals.profit);
+      document.querySelector('#visible-product-count').textContent = `${filtered.length} ${filtered.length === 1 ? 'item' : 'items'}`;
+      document.querySelector('#total-selling').textContent = formatRiel(totals.selling);
+      document.querySelector('#total-margin').textContent = formatRiel(totals.margin);
+      document.querySelector('#total-income').textContent = formatRiel(totals.income);
+      document.querySelector('#total-profit').textContent = formatRiel(totals.profit);
+      document.querySelector('#inventory-empty').style.display = filtered.length ? 'none' : 'block';
+    }
+
+    function renderPurchases() {
+      const query = purchaseSearch.value.trim().toLowerCase();
+      const category = purchaseFilter.value;
+      const filtered = purchaseData.map((item, index) => ({ item, index })).filter(({ item }) => {
+        const matchesText = `${item.code} ${item.name} ${item.package} ${item.category}`.toLowerCase().includes(query);
+        return matchesText && (category === 'all' || item.category === category);
+      });
+      const categories = [...new Set(filtered.map(({ item }) => item.category))];
+
+      purchaseBody.innerHTML = categories.map(group => {
+        const rows = filtered.filter(({ item }) => item.category === group).map(({ item, index }) => {
+          const recorded = item.totalQuantity > 0;
+          return `<tr class="purchase-row${index === selectedPurchaseIndex ? ' selected' : ''}"><td>${item.number}</td><td class="purchase-code">${escapeHTML(item.code)}</td><td><button class="purchase-product-button" type="button" data-purchase-index="${index}">${escapeHTML(item.name)}</button></td><td>${escapeHTML(item.package)}</td><td class="number">${item.totalQuantity.toLocaleString('en-US')}.00</td><td class="number">${item.totalPrice === null ? '—' : formatRiel(item.totalPrice)}</td><td><span class="purchase-state${recorded ? '' : ' empty'}">${recorded ? 'Recorded' : 'No quantity'}</span></td></tr>`;
+        }).join('');
+        return `<tr class="purchase-group"><th colspan="7">${escapeHTML(group)}</th></tr>${rows}`;
+      }).join('');
+
+      if (!filtered.some(({ index }) => index === selectedPurchaseIndex)) selectedPurchaseIndex = filtered.length ? filtered[0].index : -1;
+      const totalQuantity = purchaseData.reduce((sum, item) => sum + item.totalQuantity, 0);
+      const totalPrice = purchaseData.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+      document.querySelector('#purchase-product-count').textContent = purchaseData.length;
+      document.querySelector('#purchase-unit-count').textContent = totalQuantity.toLocaleString('en-US');
+      document.querySelector('#purchase-total-value').textContent = formatRiel(totalPrice);
+      document.querySelector('#purchase-total-quantity').textContent = totalQuantity.toLocaleString('en-US');
+      document.querySelector('#purchase-total-footer').textContent = formatRiel(totalPrice);
+      document.querySelector('#purchase-visible-count').textContent = `${filtered.length} product ${filtered.length === 1 ? 'record' : 'records'}`;
+      document.querySelector('#purchase-empty').style.display = filtered.length ? 'none' : 'block';
+      renderPurchaseDetails();
+    }
+
+    function renderPurchaseDetails() {
+      const item = purchaseData[selectedPurchaseIndex];
+      if (!item) return;
+      document.querySelector('#purchase-detail-title').textContent = item.name;
+      document.querySelector('#purchase-detail-code').textContent = `Product ${item.code}`;
+      document.querySelector('#purchase-detail-category').textContent = item.category;
+      document.querySelector('#purchase-detail-unit').textContent = item.package;
+      document.querySelector('#purchase-detail-quantity').textContent = `${item.totalQuantity.toLocaleString('en-US')}.00`;
+      document.querySelector('#purchase-detail-price').textContent = item.totalPrice === null ? '—' : formatRiel(item.totalPrice);
+      const status = document.querySelector('#purchase-detail-status');
+      status.textContent = item.totalQuantity > 0 ? 'Recorded' : 'No quantity';
+      status.classList.toggle('empty', item.totalQuantity === 0);
+      const periodRows = [`<div class="purchase-period"><span>Stock from July</span><strong>${item.stockFromJuly === null ? '—' : item.stockFromJuly.toLocaleString('en-US')}</strong></div>`];
+      item.periods.forEach((period, index) => {
+        const quantity = period.quantity === null ? '—' : `${period.quantity.toLocaleString('en-US')} qty`;
+        const price = period.price === null ? '—' : formatRiel(period.price);
+        const total = period.total === null ? '—' : formatRiel(period.total);
+        periodRows.push(`<div class="purchase-period"><span>Period ${index + 1}</span><strong>${quantity} · ${price} · ${total}</strong></div>`);
+      });
+      document.querySelector('#purchase-periods').innerHTML = periodRows.join('');
+    }
+
+    function renderStock() {
+      const query = stockSearch.value.trim().toLowerCase();
+      const category = stockFilter.value;
+      const filtered = stockData.map((item, index) => ({ item, index })).filter(({ item }) => {
+        const matchesText = `${item.code} ${item.name} ${item.unit} ${item.category}`.toLowerCase().includes(query);
+        return matchesText && (category === 'all' || item.category === category);
+      });
+      const categories = [...new Set(stockData.map(item => item.category))];
+      const visibleCategories = [...new Set(filtered.map(({ item }) => item.category))];
+      stockBody.innerHTML = visibleCategories.map(group => {
+        const rows = filtered.filter(({ item }) => item.category === group).map(({ item, index }) => {
+          const status = item.onHand < 0 ? 'negative' : item.onHand === 0 ? 'empty' : item.onHand <= 5 ? 'empty' : '';
+          const statusText = item.onHand < 0 ? 'Negative' : item.onHand === 0 ? 'Out of stock' : item.onHand <= 5 ? 'Low stock' : 'In stock';
+          const revenue = item.revenue === null ? '—' : formatRiel(item.revenue);
+          const profit = item.profit === null ? '—' : formatRiel(item.profit);
+          return `<tr><td>${index + 1}</td><td>${escapeHTML(item.code)}</td><td class="stock-product">${escapeHTML(item.name)}</td><td>${escapeHTML(item.unit)}</td><td class="number">${item.total.toLocaleString('en-US')}.00</td><td class="number">${item.onHand.toLocaleString('en-US')}.00</td><td class="number">${item.sold.toLocaleString('en-US')}.00</td><td class="number">${formatRiel(item.retail)}</td><td class="number">${revenue}</td><td class="number">${formatRiel(item.cost)}</td><td class="number">${formatRiel(item.income)}</td><td class="number">${profit}</td><td><span class="stock-status ${status}">${statusText}</span></td></tr>`;
+        }).join('');
+        return `<tr class="stock-group"><th colspan="13">${escapeHTML(group)}</th></tr>${rows}`;
+      }).join('');
+
+      const totalQuantity = stockData.reduce((sum, item) => sum + item.total, 0);
+      const totalOnHand = stockData.reduce((sum, item) => sum + item.onHand, 0);
+      const totalSold = stockData.reduce((sum, item) => sum + item.sold, 0);
+      const totalRevenue = stockData.reduce((sum, item) => sum + (item.revenue || 0), 0);
+      const totalProfit = stockData.reduce((sum, item) => sum + (item.profit || 0), 0);
+      const categoryTotals = categories.map(name => ({
+        name,
+        revenue: stockData.filter(item => item.category === name).reduce((sum, item) => sum + (item.revenue || 0), 0)
+      }));
+      const negativeCount = stockData.filter(item => item.onHand < 0).length;
+      const emptyCount = stockData.filter(item => item.onHand === 0).length;
+      const lowCount = stockData.filter(item => item.onHand > 0 && item.onHand <= 5).length;
+
+      document.querySelector('#stock-sku-count').textContent = stockData.length;
+      document.querySelector('#stock-quantity-count').textContent = totalQuantity.toLocaleString('en-US');
+      document.querySelector('#stock-on-hand-count').textContent = totalOnHand.toLocaleString('en-US');
+      document.querySelector('#stock-sold-count').textContent = totalSold.toLocaleString('en-US');
+      document.querySelector('#stock-revenue-total').textContent = formatRiel(totalRevenue);
+      document.querySelector('#stock-profit-total').textContent = formatRiel(totalProfit);
+      document.querySelector('#stock-margin-rate').textContent = `${(totalRevenue ? totalProfit / totalRevenue * 100 : 0).toFixed(1)}% gross margin`;
+      document.querySelector('#negative-stock-count').textContent = negativeCount;
+      document.querySelector('#empty-stock-count').textContent = emptyCount;
+      document.querySelector('#low-stock-count').textContent = lowCount;
+      document.querySelector('#stock-total-quantity').textContent = totalQuantity.toLocaleString('en-US');
+      document.querySelector('#stock-total-on-hand').textContent = totalOnHand.toLocaleString('en-US');
+      document.querySelector('#stock-total-sold').textContent = totalSold.toLocaleString('en-US');
+      document.querySelector('#stock-total-revenue').textContent = formatRiel(totalRevenue);
+      document.querySelector('#stock-total-profit').textContent = formatRiel(totalProfit);
+      document.querySelector('#stock-visible-count').textContent = `${filtered.length} ${filtered.length === 1 ? 'product' : 'products'}`;
+      document.querySelector('#stock-empty').style.display = filtered.length ? 'none' : 'block';
+
+      const colors = ['#79afc2', '#f0c66c', '#8ab8a6'];
+      let completedPercentage = 0;
+      const stops = categoryTotals.map((group, index) => {
+        const percentage = totalRevenue ? group.revenue / totalRevenue * 100 : 0;
+        const stop = `${colors[index]} ${completedPercentage.toFixed(2)}% ${(completedPercentage + percentage).toFixed(2)}%`;
+        completedPercentage += percentage;
+        return stop;
+      });
+      document.querySelector('#stock-donut').style.background = totalRevenue ? `conic-gradient(${stops.join(', ')})` : '#e9edef';
+      document.querySelector('#stock-sales-total-short').textContent = totalRevenue >= 1000000 ? `${(totalRevenue / 1000000).toFixed(2)}M` : `${Math.round(totalRevenue / 1000)}K`;
+      document.querySelector('#stock-category-legend').innerHTML = categoryTotals.map((group, index) => `<div class="category-legend-row"><span class="legend-swatch" style="background:${colors[index]}"></span><span>${escapeHTML(group.name)}</span><strong>${totalRevenue ? Math.round(group.revenue / totalRevenue * 100) : 0}%</strong></div>`).join('');
+
+      const topSellers = [...stockData].sort((first, second) => second.sold - first.sold).slice(0, 5);
+      const maxSold = topSellers[0]?.sold || 1;
+      document.querySelector('#top-sellers').innerHTML = topSellers.map(item => `<div class="top-seller"><span class="top-seller-name" title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</span><div class="top-seller-track"><div class="top-seller-bar" style="width:${item.sold / maxSold * 100}%"></div></div><strong class="top-seller-value">${item.sold}</strong></div>`).join('');
+    }
+
+    function renderDailyCheck() {
+      const query = dailySearch.value.trim().toLowerCase();
+      const selectedCategory = dailyCategory.value;
+      const filtered = dailyData.map((item, index) => ({ item, index })).filter(({ item }) => {
+        const matchesText = `${item.code} ${item.name} ${item.unit} ${item.category}`.toLowerCase().includes(query);
+        return matchesText && (selectedCategory === 'all' || item.category === selectedCategory);
+      });
+      const categories = [...new Set(filtered.map(({ item }) => item.category))];
+      const quantity = value => value === null ? '—' : Number(value).toFixed(2);
+      const money = value => value === null ? '—' : formatRiel(value);
+      dailyRows.innerHTML = categories.map(category => {
+        const rows = filtered.filter(({ item }) => item.category === category).map(({ item, index }) => {
+          const incomeTotal = item.totalIncomeError ? '<span class="daily-formula-error" title="Spreadsheet formula error">#VALUE!</span>' : money(item.totalIncome);
+          return `<tr><td>${index + 1}</td><td>${escapeHTML(item.code)}</td><td class="daily-product">${escapeHTML(item.name)}</td><td>${escapeHTML(item.unit)}</td><td class="number">${formatRiel(item.unitPrice)}</td><td class="number">${quantity(item.inStock)}</td><td class="number">${incomeTotal}</td><td class="number">${quantity(item.totalAdding)}</td><td class="number">${quantity(item.forSale)}</td><td class="number">${quantity(item.soldOut)}</td><td class="number">${money(item.income)}</td><td class="number">${quantity(item.adding)}</td></tr>`;
+        }).join('');
+        return `<tr class="daily-group"><th colspan="12">${escapeHTML(category)}</th></tr>${rows}`;
+      }).join('');
+
+      const dailyIncome = dailyData.reduce((sum, item) => sum + (item.income || 0), 0);
+      const formulaErrors = dailyData.filter(item => item.totalIncomeError).length;
+      document.querySelector('#daily-check-date').textContent = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date());
+      document.querySelector('#daily-income-total').textContent = formatRiel(dailyIncome);
+      document.querySelector('#daily-table-income').textContent = formatRiel(dailyIncome);
+      document.querySelector('#daily-row-count').textContent = `${filtered.length} ${filtered.length === 1 ? 'product' : 'products'}`;
+      document.querySelector('#daily-empty').style.display = filtered.length ? 'none' : 'block';
+      document.querySelector('.daily-toolbar-note').innerHTML = `<strong>Sheet figures:</strong> Total income 2,363,573៛ · ABA 2,401,073៛ · Cash on hand ${formatRiel(dailyIncome)} · Profit/Loss -7,000៛${formulaErrors ? ` · ${formulaErrors} formula error in Total Income` : ''}`;
+    }
+
+    function renderStockHistory(selectedMonth = stockHistory[0]?.month) {
+      const historyList = document.querySelector('#stock-history-list');
+      const emptyState = document.querySelector('#stock-history-empty');
+      const snapshot = document.querySelector('#stock-history-snapshot');
+      if (!stockHistory.length) {
+        historyList.innerHTML = '';
+        emptyState.hidden = false;
+        snapshot.hidden = true;
+        return;
+      }
+
+      historyList.innerHTML = stockHistory.map(entry => `<button class="stock-history-item" type="button" data-history-month="${escapeHTML(entry.month)}" aria-pressed="${entry.month === selectedMonth}"><strong>${stockMonthName(entry.month)}</strong></button>`).join('');
+      emptyState.hidden = true;
+      const entry = stockHistory.find(item => item.month === selectedMonth) || stockHistory[0];
+      const items = Array.isArray(entry.items) ? entry.items : null;
+      const totals = items ? getStockTotals(items) : entry;
+      const hasSnapshot = Boolean(items);
+      snapshot.hidden = false;
+      document.querySelector('#stock-history-month-title').textContent = stockMonthName(entry.month);
+      document.querySelector('#stock-history-metrics').innerHTML = [
+        ['Products', hasSnapshot ? items.length : '—'],
+        ['Total quantity', (totals.quantity ?? 0).toLocaleString('en-US')],
+        ['In stock', (totals.onHand ?? 0).toLocaleString('en-US')],
+        ['Sold out', (totals.sold ?? 0).toLocaleString('en-US')],
+        ['Sales revenue', formatRiel(totals.revenue ?? 0)],
+        ['Gross profit', formatRiel(totals.profit ?? 0)]
+      ].map(([label, value]) => `<div class="stock-history-metric"><span>${label}</span><strong>${value}</strong></div>`).join('');
+      document.querySelector('#stock-history-analytics').hidden = !hasSnapshot;
+      document.querySelector('#stock-history-table-wrap').hidden = !hasSnapshot;
+      document.querySelector('#stock-history-legacy').hidden = hasSnapshot;
+      if (!hasSnapshot) return;
+
+      const categoryTotals = [...new Set(items.map(item => item.category))].map(category => ({
+        category,
+        revenue: items.filter(item => item.category === category).reduce((sum, item) => sum + (item.revenue || 0), 0)
+      }));
+      const totalRevenue = totals.revenue || 0;
+      document.querySelector('#stock-history-categories').innerHTML = categoryTotals.map(group => `<div class="stock-history-row"><span>${escapeHTML(group.category)}</span><strong>${formatRiel(group.revenue)} · ${totalRevenue ? Math.round(group.revenue / totalRevenue * 100) : 0}%</strong></div>`).join('');
+      const negative = items.filter(item => item.onHand < 0).length;
+      const outOfStock = items.filter(item => item.onHand === 0).length;
+      const low = items.filter(item => item.onHand > 0 && item.onHand <= 5).length;
+      document.querySelector('#stock-history-alerts').innerHTML = `<div class="stock-history-row"><span>Negative stock</span><strong>${negative}</strong></div><div class="stock-history-row"><span>Out of stock</span><strong>${outOfStock}</strong></div><div class="stock-history-row"><span>Low stock (1-5)</span><strong>${low}</strong></div>`;
+      const sellers = [...items].sort((first, second) => second.sold - first.sold).slice(0, 5);
+      document.querySelector('#stock-history-sellers').innerHTML = sellers.map(item => `<div class="stock-history-row"><span>${escapeHTML(item.name)}</span><strong>${item.sold} sold</strong></div>`).join('');
+
+      const categories = [...new Set(items.map(item => item.category))];
+      document.querySelector('#stock-history-rows').innerHTML = categories.map(category => {
+        const rows = items.filter(item => item.category === category).map(item => {
+          const status = item.onHand < 0 ? 'negative' : item.onHand === 0 || item.onHand <= 5 ? 'empty' : '';
+          const statusText = item.onHand < 0 ? 'Negative' : item.onHand === 0 ? 'Out of stock' : item.onHand <= 5 ? 'Low stock' : 'In stock';
+          return `<tr><td>${item.number}</td><td>${escapeHTML(item.code)}</td><td class="stock-product">${escapeHTML(item.name)}</td><td>${escapeHTML(item.unit)}</td><td class="number">${item.total.toLocaleString('en-US')}.00</td><td class="number">${item.onHand.toLocaleString('en-US')}.00</td><td class="number">${item.sold.toLocaleString('en-US')}.00</td><td class="number">${formatRiel(item.retail)}</td><td class="number">${item.revenue === null ? '—' : formatRiel(item.revenue)}</td><td class="number">${formatRiel(item.cost)}</td><td class="number">${formatRiel(item.income)}</td><td class="number">${item.profit === null ? '—' : formatRiel(item.profit)}</td><td><span class="stock-status ${status}">${statusText}</span></td></tr>`;
+        }).join('');
+        return `<tr class="stock-group"><th colspan="13">${escapeHTML(category)}</th></tr>${rows}`;
+      }).join('');
+      document.querySelector('#history-total-quantity').textContent = totals.quantity.toLocaleString('en-US');
+      document.querySelector('#history-total-on-hand').textContent = totals.onHand.toLocaleString('en-US');
+      document.querySelector('#history-total-sold').textContent = totals.sold.toLocaleString('en-US');
+      document.querySelector('#history-total-revenue').textContent = formatRiel(totals.revenue);
+      document.querySelector('#history-total-profit').textContent = formatRiel(totals.profit);
+    }
+
+    dashboardSearch.addEventListener('input', () => {
+      const query = dashboardSearch.value.trim().toLowerCase();
+      projectRows.forEach(row => { row.hidden = !row.textContent.toLowerCase().includes(query); });
+      orderEvents.forEach(event => { event.hidden = !event.textContent.toLowerCase().includes(query); });
+    });
+    inventorySearch.addEventListener('input', renderInventory);
+    categoryFilter.addEventListener('change', renderInventory);
+    purchaseSearch.addEventListener('input', renderPurchases);
+    purchaseFilter.addEventListener('change', renderPurchases);
+    stockSearch.addEventListener('input', renderStock);
+    stockFilter.addEventListener('change', renderStock);
+    dailySearch.addEventListener('input', renderDailyCheck);
+    dailyCategory.addEventListener('change', renderDailyCheck);
+    document.querySelector('#update-stock-month').addEventListener('click', () => {
+      const nextMonth = nextStockMonth(stockMonth);
+      if (!window.confirm(`Close ${stockMonthName(stockMonth)} and start ${stockMonthName(nextMonth)}? Current totals will be archived, remaining stock will carry forward, and monthly sales counters will reset.`)) return;
+      updateStockMonth(nextMonth);
+      renderStock();
+    });
+    document.querySelector('#open-stock-history').addEventListener('click', () => {
+      renderStockHistory();
+      document.querySelector('#stock-history-dialog').showModal();
+    });
+    document.querySelector('#stock-history-list').addEventListener('click', event => {
+      const monthButton = event.target.closest('[data-history-month]');
+      if (monthButton) renderStockHistory(monthButton.dataset.historyMonth);
+    });
+    document.querySelector('#close-stock-history').addEventListener('click', () => document.querySelector('#stock-history-dialog').close());
+    window.addEventListener('focus', () => { if (syncStockMonthToCalendar()) renderStock(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && syncStockMonthToCalendar()) renderStock(); });
+    window.setInterval(() => { if (syncStockMonthToCalendar()) renderStock(); }, 60 * 60 * 1000);
+    purchaseBody.addEventListener('click', event => {
+      const productButton = event.target.closest('[data-purchase-index]');
+      if (!productButton) return;
+      selectedPurchaseIndex = Number(productButton.dataset.purchaseIndex);
+      renderPurchases();
+    });
+    document.querySelector('#open-purchase-dialog').addEventListener('click', () => {
+      purchaseProductSelect.innerHTML = purchaseData.map((item, index) => `<option value="${index}">${escapeHTML(item.code)} · ${escapeHTML(item.name)}</option>`).join('');
+      purchaseProductSelect.value = selectedPurchaseIndex < 0 ? '0' : String(selectedPurchaseIndex);
+      purchaseDialog.showModal();
+    });
+    document.querySelector('#cancel-purchase').addEventListener('click', () => purchaseDialog.close());
+    purchaseForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const values = new FormData(purchaseForm);
+      const productIndex = Number(values.get('product'));
+      const periodIndex = Number(values.get('period'));
+      const quantity = Number(values.get('quantity'));
+      const price = Number(values.get('price'));
+      const item = purchaseData[productIndex];
+      const period = item.periods[periodIndex];
+      const oldQuantity = period.quantity || 0;
+      const oldTotal = period.total || 0;
+      const addedTotal = quantity * price;
+      period.quantity = oldQuantity + quantity;
+      period.total = oldTotal + addedTotal;
+      period.price = Math.round(period.total / period.quantity);
+      item.totalQuantity += quantity;
+      item.totalPrice = (item.totalPrice || 0) + addedTotal;
+      selectedPurchaseIndex = productIndex;
+      try {
+        localStorage.setItem(purchaseStorageKey, JSON.stringify(purchaseData));
+      } catch {
+        localStorage.removeItem(purchaseStorageKey);
+      }
+      purchaseForm.reset();
+      purchaseDialog.close();
+      renderPurchases();
+    });
+    document.querySelector('#open-product-dialog').addEventListener('click', () => productDialog.showModal());
+    document.querySelector('#cancel-product').addEventListener('click', () => productDialog.close());
+    productForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const values = new FormData(productForm);
+      const cost = Number(values.get('cost'));
+      const selling = Number(values.get('selling'));
+      const quantity = Number(values.get('quantity'));
+      const margin = selling - cost;
+      const addition = {
+        category: values.get('category'),
+        code: values.get('code').trim(),
+        name: values.get('name').trim(),
+        package: values.get('package').trim(),
+        quantity,
+        cost,
+        selling,
+        margin,
+        income: selling * quantity,
+        profit: margin * quantity
+      };
+      inventoryItems.push(addition);
+      try {
+        localStorage.setItem(inventoryStorageKey, JSON.stringify(inventoryItems.slice(baseInventory.length)));
+      } catch {
+        localStorage.removeItem(inventoryStorageKey);
+      }
+      productForm.reset();
+      productDialog.close();
+      renderInventory();
+    });
+
+    renderInventory();
+    renderPurchases();
+    renderStock();
+    renderDailyCheck();
+    showView(location.hash.slice(1) || 'dashboard');
+  </script>
+</body>
+</html>
