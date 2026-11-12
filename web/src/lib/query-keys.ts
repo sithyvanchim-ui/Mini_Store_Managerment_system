@@ -9,6 +9,9 @@ export const queryKeys = {
       ["dashboard", "top-products", days, limit] as const,
     activity: (limit: number) => ["dashboard", "activity", limit] as const,
   },
+  activity: {
+    all: ["dashboard", "activity"] as const,
+  },
   products: {
     all: ["products"] as const,
     list: (params: object) => ["products", "list", params] as const,
@@ -55,5 +58,15 @@ export const queryKeys = {
   users: {
     all: ["users"] as const,
     list: (params: object) => ["users", "list", params] as const,
+  },
+  funds: {
+    all: ["funds"] as const,
+    list: (params: object) => ["funds", "list", params] as const,
+    pending: ["funds", "pending-count"] as const,
+  },
+  expenses: {
+    all: ["expenses"] as const,
+    list: (params: object) => ["expenses", "list", params] as const,
+    today: ["expenses", "today"] as const,
   },
 };

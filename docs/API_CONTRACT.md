@@ -201,6 +201,34 @@ Upserts one close per date for admin/staff. Response `DailyClose`:
 
 - `GET /daily-closes?page=1&page_size=20&from=&to=`
 
+## Fund requests
+
+Money requested from the main ABA account to buy products/supplies. Staff create requests; admins review and disburse. All amounts in KHR.
+
+- `GET /fund-requests?status=pending&mine=true&page=1&page_size=20` — staff see their own requests; admins see everything. Response `Paginated<FundRequest>` where `FundRequest` = `{ id, reference, amount, purpose, note, status, requested_by_name, reviewed_by_name, decision_note, reviewed_at, created_at }`. Status flow: `pending → approved → disbursed` (or `rejected`). Reference format `FR-YYYYMMDD-NNNN`.
+- `GET /fund-requests/pending-count` → `{ pending: number }`
+- `POST /fund-requests` — any user.
+  ```json
+  { "amount": 40000, "purpose": "Restock milk and jelly", "note": "optional" }
+  ```
+- `POST /fund-requests/{id}/review` — admin only; decision `approved` or `rejected` with optional note.
+  ```json
+  { "decision": "approved", "note": "Covers PO-20261111-0001" }
+  ```
+- `POST /fund-requests/{id}/disburse` — admin only; marks an approved request as sent from the ABA account.
+
+## Expenses
+
+Money already spent by the shop; deducted from ABA sales in the daily check. Categories: `restock | supplies | utility | other`.
+
+- `GET /expenses?from=&to=&category=&page=1&page_size=20` — response `Paginated<Expense>` plus `sum` (total for the current filter). `Expense` = `{ id, business_date, category, description, amount, created_by_name, created_at }`.
+- `GET /expenses/today` → `{ date: "2026-11-12", total: 20000 }`
+- `POST /expenses` — any user.
+  ```json
+  { "business_date": "2026-11-12", "category": "supplies", "description": "Plastic bags and receipt rolls", "amount": 12000 }
+  ```
+- `DELETE /expenses/{id}` — admin only.
+
 ## Dashboard
 
 - `GET /dashboard/summary` → today/yesterday revenue, profit, units, sales count, change percentages, low-stock count, out-of-stock count, active products, inventory value, ABA total.

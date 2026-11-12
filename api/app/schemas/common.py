@@ -13,6 +13,7 @@ class Page(BaseModel, Generic[T]):
     total: int
     page: int
     page_size: int
+    sum: int | None = None
 
 
 # Pydantic's EmailStr rejects reserved special-use domains (RFC 6761/6762,

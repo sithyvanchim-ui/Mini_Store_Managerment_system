@@ -380,3 +380,82 @@ class AppSettings(Base):
     updated_at: Mapped[datetime] = mapped_column(
         UTCDateTime, nullable=False, default=utcnow, onupdate=utcnow
     )
+
+
+class FundRequest(Base):
+    """Request to move money from the main ABA account for buying products."""
+
+    __tablename__ = "fund_requests"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_fund_requests_amount_positive"),
+        CheckConstraint(
+            "status IN ('pending', 'approved', 'rejected', 'disbursed')",
+            name="ck_fund_requests_status",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    reference: Mapped[str] = mapped_column(String(40), nullable=False, unique=True)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    purpose: Mapped[str] = mapped_column(String(200), nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="pending", index=True
+    )
+    requested_by_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id"), nullable=False, index=True
+    )
+    reviewed_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id"), nullable=True
+    )
+    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        UTCDateTime, nullable=False, default=utcnow, index=True
+    )
+
+    requested_by: Mapped[User] = relationship(
+        foreign_keys=[requested_by_id], lazy="selectin"
+    )
+    reviewed_by: Mapped[User | None] = relationship(
+        foreign_keys=[reviewed_by_id], lazy="selectin"
+    )
+
+    @property
+    def requested_by_name(self) -> str:
+        return self.requested_by.name if self.requested_by else ""
+
+    @property
+    def reviewed_by_name(self) -> str | None:
+        return self.reviewed_by.name if self.reviewed_by else None
+
+
+class Expense(Base):
+    """Money paid out of the main ABA account during the day."""
+
+    __tablename__ = "expenses"
+    __table_args__ = (
+        CheckConstraint("amount >= 0", name="ck_expenses_amount_nonnegative"),
+        CheckConstraint(
+            "category IN ('restock', 'supplies', 'utility', 'other')",
+            name="ck_expenses_category",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    business_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String(16), nullable=False, default="other")
+    description: Mapped[str] = mapped_column(String(200), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        UTCDateTime, nullable=False, default=utcnow, index=True
+    )
+
+    created_by: Mapped[User] = relationship(foreign_keys=[created_by_id], lazy="selectin")
+
+    @property
+    def created_by_name(self) -> str:
+        return self.created_by.name if self.created_by else ""

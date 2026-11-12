@@ -15,6 +15,7 @@ import asyncio
 import random
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,6 +27,8 @@ from app.models import (
     AppSettings,
     Category,
     DailyClose,
+    Expense,
+    FundRequest,
     Product,
     Purchase,
     PurchaseItem,
@@ -102,9 +105,23 @@ SUPPLIER_DEFS: list[tuple[str, str, str, str, str, str]] = [
     ),
 ]
 
-USER_DEFS: list[tuple[str, str, str, str]] = [
-    ("Sarah Green", "admin@ministore.local", "Admin123!", "admin"),
-    ("Dara Sok", "staff@ministore.local", "Staff123!", "staff"),
+# Fixed UUIDs so login cookies survive database re-seeds: the JWT "sub" stays
+# pointing at the same user row every time the demo data is rebuilt.
+USER_DEFS: list[tuple[str, str, str, str, str]] = [
+    (
+        "Sarah Green",
+        "admin@ministore.local",
+        "Admin123!",
+        "admin",
+        "6b2f5c1e-1d4a-4b8e-9c3d-2a7f8e5b1a01",
+    ),
+    (
+        "Dara Sok",
+        "staff@ministore.local",
+        "Staff123!",
+        "staff",
+        "9c4d8e2f-3b6a-4c7d-8e5f-1a2b3c4d5e02",
+    ),
 ]
 
 
@@ -140,9 +157,10 @@ async def _ensure_reference_data(db: AsyncSession) -> tuple[dict[str, User], dic
     users: dict[str, User] = {}
     for user in (await db.scalars(select(User))).all():
         users[user.role] = user
-    for name, email, password, role in USER_DEFS:
+    for name, email, password, role, user_id in USER_DEFS:
         if role not in users:
             user = User(
+                id=UUID(user_id),
                 name=name,
                 email=email,
                 password_hash=hash_password(password),
@@ -481,6 +499,21 @@ async def seed() -> None:
 
         if product_count and sale_count:
             print("Seed skipped: data already present.")
+            # Still top up newer tables (e.g. fund requests / expenses) when
+            # they are empty so a re-run after a migration gets demo data.
+            fund_count = await db.scalar(select(func.count(FundRequest.id)))
+            expense_count = await db.scalar(select(func.count(Expense.id)))
+            if not fund_count or not expense_count:
+                admin_row = await db.scalar(
+                    select(User).where(User.email == "admin@ministore.local")
+                )
+                staff_row = await db.scalar(
+                    select(User).where(User.email == "staff@ministore.local")
+                )
+                if admin_row and staff_row:
+                    await _generate_money_data(
+                        db, admin=admin_row, staff=staff_row
+                    )
             await _report(db)
             return
 
@@ -501,7 +534,87 @@ async def seed() -> None:
             suppliers=supplier_rows,
             products=product_rows,
         )
+        await _generate_money_data(db, admin=admin_row, staff=staff_row)
         await _report(db)
+
+
+async def _generate_money_data(
+    db: AsyncSession, *, admin: User, staff: User
+) -> None:
+    """Demo fund requests and expenses for the last few days."""
+    now = datetime.now(UTC)
+    today = now.date()
+
+    fund_defs: list[tuple[int, str, str, str, str | None, int]] = [
+        # (day_offset, amount, purpose, status, decision_note, actor 0=admin 1=staff)
+        (0, 40_000, "Restock milk and jelly from Angkor distributor", "pending", None, 1),
+        (0, 12_000, "Buy plastic bags and receipt rolls", "pending", None, 1),
+        (1, 96_000, "Weekly drink restock", "approved", "Covers PO-20261111-0001", 0),
+        (3, 60_000, "New stock of cold drinks", "disbursed", "Sent via ABA", 0),
+        (5, 25_000, "Ice supply for the week", "rejected", "Too high; buy half for now.", 0),
+    ]
+    for day_offset, amount, purpose, status, decision, actor_index in fund_defs:
+        requester = staff if actor_index else admin
+        created = now - timedelta(days=day_offset, hours=3)
+        count = await db.scalar(
+            select(func.count()).select_from(FundRequest).where(
+                FundRequest.created_at
+                >= created.replace(hour=0, minute=0, second=0, microsecond=0),
+                FundRequest.created_at
+                < created.replace(hour=0, minute=0, second=0, microsecond=0)
+                + timedelta(days=1),
+            )
+        )
+        request = FundRequest(
+            reference=f"FR-{created:%Y%m%d}-{(count or 0) + 1:04d}",
+            amount=amount,
+            purpose=purpose,
+            status=status,
+            requested_by_id=requester.id,
+            decision_note=decision,
+            reviewed_by_id=admin.id if status != "pending" else None,
+            reviewed_at=created if status != "pending" else None,
+            created_at=created,
+        )
+        db.add(request)
+        if day_offset <= ACTIVITY_DAYS:
+            db.add(
+                ActivityLog(
+                    type="fund_request",
+                    message=(
+                        f"Fund request {request.reference} for {amount:,} KHR "
+                        f"is {status}."
+                    ),
+                    actor_name=requester.name,
+                    user_id=requester.id,
+                    entity_type="fund_request",
+                    entity_id=request.reference,
+                    created_at=created,
+                )
+            )
+
+    expense_defs: list[tuple[int, str, str, int, int]] = [
+        # (day_offset, category, description, amount, actor 0=admin 1=staff)
+        (0, "supplies", "Plastic bags and receipt rolls", 12_000, 1),
+        (0, "other", "Ice delivery", 8_000, 1),
+        (1, "restock", "Van delivery fee for drink restock", 6_000, 0),
+        (2, "utility", "Electricity top-up card", 20_000, 0),
+        (4, "supplies", "Cleaning supplies", 9_500, 1),
+    ]
+    for day_offset, category, description, amount, actor_index in expense_defs:
+        recorder = staff if actor_index else admin
+        db.add(
+            Expense(
+                business_date=today - timedelta(days=day_offset),
+                category=category,
+                description=description,
+                amount=amount,
+                created_by_id=recorder.id,
+                created_at=now - timedelta(days=day_offset, hours=3),
+            )
+        )
+
+    await db.commit()
 
 
 async def _report(db: AsyncSession) -> None:
@@ -515,6 +628,8 @@ async def _report(db: AsyncSession) -> None:
         "stock_movements": await db.scalar(select(func.count(StockMovement.id))),
         "daily_closes": await db.scalar(select(func.count(DailyClose.id))),
         "activity_logs": await db.scalar(select(func.count(ActivityLog.id))),
+        "fund_requests": await db.scalar(select(func.count(FundRequest.id))),
+        "expenses": await db.scalar(select(func.count(Expense.id))),
     }
     print("Seed summary:")
     for key, value in counts.items():

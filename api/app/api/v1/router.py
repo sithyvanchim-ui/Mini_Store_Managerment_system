@@ -7,6 +7,8 @@ from app.api.v1 import (
     categories,
     daily_closes,
     dashboard,
+    expenses,
+    fund_requests,
     products,
     purchases,
     reports,
@@ -32,5 +34,7 @@ for module in (
     dashboard,
     reports,
     settings,
+    fund_requests,
+    expenses,
 ):
     api_router.include_router(module.router)

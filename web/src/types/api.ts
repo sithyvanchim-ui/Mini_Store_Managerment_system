@@ -354,3 +354,70 @@ export interface DailyClosePayload {
   expenses: number;
   notes?: string;
 }
+
+export type FundRequestStatus = "pending" | "approved" | "rejected" | "disbursed";
+
+export interface FundRequest {
+  id: string;
+  reference: string;
+  amount: number;
+  purpose: string;
+  note: string | null;
+  status: FundRequestStatus;
+  requested_by_name: string;
+  reviewed_by_name: string | null;
+  decision_note: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export interface FundRequestListParams {
+  status?: FundRequestStatus;
+  mine?: boolean;
+  page?: number;
+  page_size?: number;
+}
+
+export interface CreateFundRequestPayload {
+  amount: number;
+  purpose: string;
+  note?: string;
+}
+
+export type FundDecision = "approved" | "rejected";
+
+export interface FundReviewPayload {
+  decision: FundDecision;
+  note?: string;
+}
+
+export type ExpenseCategory = "restock" | "supplies" | "utility" | "other";
+
+export interface Expense {
+  id: string;
+  business_date: string;
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  created_by_name: string;
+  created_at: string;
+}
+
+export interface ExpenseListParams {
+  from?: string;
+  to?: string;
+  category?: ExpenseCategory;
+  page?: number;
+  page_size?: number;
+}
+
+export interface ExpensePage extends Paginated<Expense> {
+  sum: number | null;
+}
+
+export interface CreateExpensePayload {
+  business_date: string;
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+}
