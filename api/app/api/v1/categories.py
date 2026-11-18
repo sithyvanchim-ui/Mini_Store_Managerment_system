@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import require_admin, require_staff
 from app.core.errors import ApiError
 from app.models import Category, Product, User
 from app.schemas.categories import CategoryCreate, CategoryRead, CategoryUpdate
@@ -27,7 +27,7 @@ async def _counts(db: AsyncSession) -> dict[UUID, int]:
 
 @router.get("", response_model=list[CategoryRead])
 async def list_categories(
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[CategoryRead]:
     categories = (
@@ -48,7 +48,7 @@ async def list_categories(
 @router.post("", response_model=CategoryRead)
 async def create_category(
     payload: CategoryCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> CategoryRead:
     name = payload.name.strip()
@@ -79,7 +79,7 @@ async def create_category(
 async def update_category(
     category_id: UUID,
     payload: CategoryUpdate,
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> CategoryRead:
     category = await db.get(Category, category_id)
@@ -144,3 +144,7 @@ async def delete_category(
     await db.delete(category)
     await db.commit()
     return Response(status_code=204)
+
+
+
+

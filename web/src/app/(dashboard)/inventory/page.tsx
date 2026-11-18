@@ -52,10 +52,13 @@ import {
   useProducts,
   useSetProductActive,
 } from "@/hooks/use-products";
+import { useMe } from "@/hooks/use-me";
 
 type TabValue = "products" | "fridge";
 
 export default function InventoryPage() {
+  const me = useMe();
+  const isAdmin = me.data?.user.role === "admin";
   const [tab, setTab] = useState<TabValue>("products");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
@@ -202,13 +205,15 @@ export default function InventoryPage() {
               <Grid2x2 className="size-4" />
               Fridge map
             </Button>
-            <Button
-              className="rounded-full bg-brand px-4 text-white hover:bg-brand-strong"
-              onClick={openAdd}
-            >
-              <Plus className="size-4" />
-              Add product
-            </Button>
+            {isAdmin ? (
+              <Button
+                className="rounded-full bg-brand px-4 text-white hover:bg-brand-strong"
+                onClick={openAdd}
+              >
+                <Plus className="size-4" />
+                Add product
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -416,7 +421,7 @@ export default function InventoryPage() {
                     >
                       Clear filters
                     </Button>
-                  ) : (
+                  ) : isAdmin ? (
                     <Button
                       className="rounded-full bg-brand text-white hover:bg-brand-strong"
                       onClick={openAdd}
@@ -424,7 +429,7 @@ export default function InventoryPage() {
                       <Plus className="size-4" />
                       Add product
                     </Button>
-                  )
+                  ) : null
                 }
               />
             ) : (
@@ -434,6 +439,7 @@ export default function InventoryPage() {
                   onEdit={openEdit}
                   onAdjust={setAdjustProduct}
                   onToggleActive={toggleActive}
+                  canManage={isAdmin}
                 />
                 <DataPagination
                   className="mt-4"
@@ -478,19 +484,23 @@ export default function InventoryPage() {
                 description="Add products with a location and slot code to populate the map."
                 icon={<Grid2x2 />}
                 action={
-                  <Button
-                    className="rounded-full bg-brand text-white hover:bg-brand-strong"
-                    onClick={openAdd}
-                  >
-                    <Plus className="size-4" />
-                    Add product
-                  </Button>
+                  isAdmin ? (
+                    <Button
+                      className="rounded-full bg-brand text-white hover:bg-brand-strong"
+                      onClick={openAdd}
+                    >
+                      <Plus className="size-4" />
+                      Add product
+                    </Button>
+                  ) : null
                 }
               />
             ) : (
               <FridgeMap
                 products={allProducts}
-                onSelectProduct={setAdjustProduct}
+                onSelectProduct={
+                  isAdmin ? setAdjustProduct : undefined
+                }
               />
             )}
           </SectionCard>

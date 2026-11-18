@@ -174,8 +174,9 @@ export function PosCart({
         </div>
 
         <div className="rounded-xl bg-mint/70 px-3 py-2 text-[11px] leading-5 text-brand-strong">
-          Every sale settles by ABA transfer — confirm the payment on the
-          customer&apos;s phone before charging.
+          No cash — the buyer pays by KHQR, Alipay, card, Pi Pay, or ACLEDA.
+          Confirm the payment on their phone, then pick the method when
+          charging.
         </div>
 
         <div className="space-y-1.5">

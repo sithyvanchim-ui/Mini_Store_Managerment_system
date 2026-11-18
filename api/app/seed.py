@@ -122,6 +122,13 @@ USER_DEFS: list[tuple[str, str, str, str, str]] = [
         "staff",
         "9c4d8e2f-3b6a-4c7d-8e5f-1a2b3c4d5e02",
     ),
+    (
+        "Sophear Chhay",
+        "customer@ministore.local",
+        "Customer123!",
+        "customer",
+        "7a1e9b4c-5d2f-4a8b-b3c6-8e9f0a1b2c03",
+    ),
 ]
 
 
@@ -151,6 +158,9 @@ async def _ensure_reference_data(db: AsyncSession) -> tuple[dict[str, User], dic
                 currency="KHR",
                 low_stock_default=6,
                 receipt_footer="Thank you! Please keep the fridge tidy.",
+                # Demo Bakong account; replace with the shop's real KHQR
+                # string in Settings for production use.
+                khqr_data="ministore@demo",
             )
         )
 
@@ -514,6 +524,23 @@ async def seed() -> None:
                     await _generate_money_data(
                         db, admin=admin_row, staff=staff_row
                     )
+            # Top up the demo customer on databases seeded before the role
+            # existed.
+            customer_count = await db.scalar(
+                select(func.count(User.id)).where(User.role == "customer")
+            )
+            if not customer_count:
+                db.add(
+                    User(
+                        name="Sophear Chhay",
+                        email="customer@ministore.local",
+                        password_hash=hash_password("Customer123!"),
+                        role="customer",
+                        is_active=True,
+                    )
+                )
+                await db.commit()
+                print("Added demo customer: customer@ministore.local")
             await _report(db)
             return
 

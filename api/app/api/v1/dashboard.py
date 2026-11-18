@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import require_staff
 from app.models import ActivityLog, DailyClose, Product, Sale, SaleItem
 from app.schemas.dashboard import (
     ActivityItem,
@@ -74,7 +74,7 @@ async def _aba_total(db: AsyncSession, start: datetime, end: datetime) -> int:
 
 @router.get("/summary", response_model=DashboardSummary)
 async def dashboard_summary(
-    _user=Depends(get_current_user),
+    _user=Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> DashboardSummary:
     now = datetime.now(UTC)
@@ -139,7 +139,7 @@ async def dashboard_summary(
 @router.get("/sales-trend", response_model=list[SalesTrendPoint])
 async def sales_trend(
     days: int = Query(default=7, ge=1, le=90),
-    _user=Depends(get_current_user),
+    _user=Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[SalesTrendPoint]:
     now = datetime.now(UTC)
@@ -203,7 +203,7 @@ async def sales_trend(
 @router.get("/category-mix", response_model=list[CategoryMixItem])
 async def category_mix(
     days: int = Query(default=30, ge=1, le=365),
-    _user=Depends(get_current_user),
+    _user=Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[CategoryMixItem]:
     start = datetime.now(UTC) - timedelta(days=days)
@@ -268,7 +268,7 @@ async def category_mix(
 async def top_products(
     days: int = Query(default=30, ge=1, le=365),
     limit: int = Query(default=5, ge=1, le=50),
-    _user=Depends(get_current_user),
+    _user=Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[TopProduct]:
     start = datetime.now(UTC) - timedelta(days=days)
@@ -308,7 +308,7 @@ async def top_products(
 @router.get("/recent-activity", response_model=list[ActivityItem])
 async def recent_activity(
     limit: int = Query(default=8, ge=1, le=50),
-    _user=Depends(get_current_user),
+    _user=Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[ActivityItem]:
     rows = (
@@ -328,3 +328,7 @@ async def recent_activity(
         )
         for log in rows
     ]
+
+
+
+

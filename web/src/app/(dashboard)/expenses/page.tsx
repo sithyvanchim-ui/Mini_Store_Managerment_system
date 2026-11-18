@@ -273,13 +273,15 @@ export default function ExpensesPage() {
         title="Expenses"
         description="Track every KHR the shop spends, so the daily ABA check balances correctly."
         actions={
-          <Button
-            className="rounded-full text-xs font-bold"
-            onClick={() => setAddOpen(true)}
-          >
-            <Plus className="size-4" />
-            Add expense
-          </Button>
+          isAdmin ? (
+            <Button
+              className="rounded-full text-xs font-bold"
+              onClick={() => setAddOpen(true)}
+            >
+              <Plus className="size-4" />
+              Add expense
+            </Button>
+          ) : null
         }
       />
 

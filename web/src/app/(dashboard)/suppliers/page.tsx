@@ -32,10 +32,13 @@ import {
   type SupplierListParams,
 } from "@/hooks/use-suppliers";
 import { useDebouncedValue } from "@/hooks/use-products";
+import { useMe } from "@/hooks/use-me";
 
 type ActiveFilter = "all" | "active" | "inactive";
 
 export default function SuppliersPage() {
+  const me = useMe();
+  const isAdmin = me.data?.user.role === "admin";
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>("all");
@@ -135,13 +138,15 @@ export default function SuppliersPage() {
         title="Suppliers"
         description="The people and wholesalers who keep the dorm store stocked."
         actions={
-          <Button
-            className="rounded-full bg-brand px-4 text-white hover:bg-brand-strong"
-            onClick={openAdd}
-          >
-            <Plus className="size-4" />
-            Add supplier
-          </Button>
+          isAdmin ? (
+            <Button
+              className="rounded-full bg-brand px-4 text-white hover:bg-brand-strong"
+              onClick={openAdd}
+            >
+              <Plus className="size-4" />
+              Add supplier
+            </Button>
+          ) : null
         }
       />
 
@@ -239,7 +244,7 @@ export default function SuppliersPage() {
                 >
                   Clear filters
                 </Button>
-              ) : (
+              ) : isAdmin ? (
                 <Button
                   className="rounded-full bg-brand text-white hover:bg-brand-strong"
                   onClick={openAdd}
@@ -247,7 +252,7 @@ export default function SuppliersPage() {
                   <Plus className="size-4" />
                   Add supplier
                 </Button>
-              )
+              ) : null
             }
           />
         ) : (
@@ -257,6 +262,7 @@ export default function SuppliersPage() {
               onEdit={openEdit}
               onDeactivate={requestDeactivate}
               onActivate={activate}
+              canManage={isAdmin}
             />
             <DataPagination
               className="mt-4"

@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
+import { SectionCard } from "@/components/shared/section-card";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   Tabs,
   TabsContent,
@@ -10,8 +13,11 @@ import {
 } from "@/components/ui/tabs";
 import { PosScreen } from "@/components/sales/pos-screen";
 import { SalesHistory } from "@/components/sales/sales-history";
+import { useMe } from "@/hooks/use-me";
 
 export default function SalesPage() {
+  const me = useMe();
+  const isAdmin = me.data?.user.role === "admin";
   const [tab, setTab] = useState("pos");
 
   return (
@@ -39,7 +45,21 @@ export default function SalesPage() {
       />
 
       <TabsContent value="pos" className="mt-0">
-        <PosScreen />
+        {isAdmin ? (
+          <PosScreen />
+        ) : (
+          <SectionCard
+            title="Point of sale"
+            description="Only admins can charge sales."
+            bodyClassName="p-4 sm:p-5"
+          >
+            <EmptyState
+              icon={<Lock />}
+              title="Admins only"
+              description="Your account has view-only access. Ask an admin to record the sale, or watch it appear in the sales history."
+            />
+          </SectionCard>
+        )}
       </TabsContent>
       <TabsContent value="history" className="mt-0">
         <SalesHistory />

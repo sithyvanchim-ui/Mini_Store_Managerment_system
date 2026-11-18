@@ -70,7 +70,7 @@ function statusCounts(products: Product[]) {
 
 interface FridgeMapProps {
   products: Product[];
-  onSelectProduct: (product: Product) => void;
+  onSelectProduct?: (product: Product) => void;
 }
 
 export function FridgeMap({ products, onSelectProduct }: FridgeMapProps) {
@@ -154,7 +154,7 @@ export function FridgeMap({ products, onSelectProduct }: FridgeMapProps) {
                       <button
                         key={product.id}
                         type="button"
-                        onClick={() => onSelectProduct(product)}
+                        onClick={() => onSelectProduct?.(product)}
                         aria-label={`Adjust stock for ${product.name}, slot ${
                           group.slot
                         }, ${formatNumber(product.stock_qty)} units, ${
@@ -235,9 +235,11 @@ export function FridgeMap({ products, onSelectProduct }: FridgeMapProps) {
               <TableHead>Location</TableHead>
               <TableHead className="text-right">Stock</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">
-                <span className="sr-only">Action</span>
-              </TableHead>
+              {onSelectProduct ? (
+                <TableHead className="text-right">
+                  <span className="sr-only">Action</span>
+                </TableHead>
+              ) : null}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -259,18 +261,20 @@ export function FridgeMap({ products, onSelectProduct }: FridgeMapProps) {
                 <TableCell>
                   <StockStatusBadge status={product.stock_status} />
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() => onSelectProduct(product)}
-                    aria-label={`Adjust stock for ${product.name}`}
-                  >
-                    <ArrowUpDown className="size-3.5" />
-                    Adjust
-                  </Button>
-                </TableCell>
+                {onSelectProduct ? (
+                  <TableCell className="text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => onSelectProduct?.(product)}
+                      aria-label={`Adjust stock for ${product.name}`}
+                    >
+                      <ArrowUpDown className="size-3.5" />
+                      Adjust
+                    </Button>
+                  </TableCell>
+                ) : null}
               </TableRow>
             ))}
           </TableBody>

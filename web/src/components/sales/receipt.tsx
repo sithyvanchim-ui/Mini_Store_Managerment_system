@@ -5,7 +5,15 @@ import {
   formatKHR,
   formatNumber,
 } from "@/lib/utils";
-import type { Sale } from "@/types/api";
+import type { PaymentMethod, Sale } from "@/types/api";
+
+const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+  aba_khqr: "ABA KHQR",
+  alipay: "Alipay",
+  card: "Credit / Debit Card",
+  pi_pay: "Pi Pay",
+  acleda: "ACLEDA",
+};
 
 interface ReceiptProps {
   sale: Sale;
@@ -89,7 +97,9 @@ export function Receipt({
         </div>
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Payment</dt>
-          <dd className="font-semibold">ABA</dd>
+          <dd className="font-semibold">
+            {PAYMENT_LABELS[sale.payment_method] ?? "ABA KHQR"}
+          </dd>
         </div>
       </dl>
 

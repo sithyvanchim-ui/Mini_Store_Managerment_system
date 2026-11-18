@@ -11,6 +11,7 @@ class AppSettingsRead(BaseModel):
     currency: str
     low_stock_default: int
     receipt_footer: str
+    khqr_data: str | None
 
 
 class AppSettingsUpdate(BaseModel):
@@ -19,3 +20,4 @@ class AppSettingsUpdate(BaseModel):
     currency: str | None = Field(default=None, min_length=1, max_length=8)
     low_stock_default: int | None = Field(default=None, ge=0)
     receipt_footer: str | None = Field(default=None, max_length=2000)
+    khqr_data: str | None = Field(default=None, max_length=2000)

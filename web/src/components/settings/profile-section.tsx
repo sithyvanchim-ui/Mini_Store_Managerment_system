@@ -95,7 +95,11 @@ export function ProfileSection() {
               </p>
               <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-mint px-2.5 py-0.5 text-[10px] font-bold text-brand-strong">
                 <ShieldCheck className="size-3" />
-                {user.role === "admin" ? "Administrator" : "Staff"}
+                {user.role === "admin"
+                  ? "Administrator"
+                  : user.role === "customer"
+                    ? "Customer"
+                    : "Staff"}
               </span>
             </div>
           </div>

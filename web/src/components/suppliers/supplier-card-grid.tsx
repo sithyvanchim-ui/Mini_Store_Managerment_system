@@ -33,6 +33,8 @@ interface SupplierCardGridProps {
   onEdit: (supplier: Supplier) => void;
   onDeactivate: (supplier: Supplier) => void;
   onActivate: (supplier: Supplier) => void;
+  /** When false, the manage buttons are hidden (staff are read-only). */
+  canManage?: boolean;
 }
 
 export function SupplierCardGrid({
@@ -40,6 +42,7 @@ export function SupplierCardGrid({
   onEdit,
   onDeactivate,
   onActivate,
+  canManage = true,
 }: SupplierCardGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -126,41 +129,43 @@ export function SupplierCardGrid({
               </p>
             ) : null}
 
-            <div className="mt-auto flex items-center justify-end gap-2 border-t border-border/70 pt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-                onClick={() => onEdit(supplier)}
-                aria-label={`Edit ${supplier.name}`}
-              >
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              {supplier.is_active ? (
+            {canManage ? (
+              <div className="mt-auto flex items-center justify-end gap-2 border-t border-border/70 pt-4">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => onDeactivate(supplier)}
-                  aria-label={`Deactivate ${supplier.name}`}
+                  className="rounded-full"
+                  onClick={() => onEdit(supplier)}
+                  aria-label={`Edit ${supplier.name}`}
                 >
-                  <Power className="size-3.5" />
-                  Deactivate
+                  <Pencil className="size-3.5" />
+                  Edit
                 </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full text-brand-strong hover:bg-mint"
-                  onClick={() => onActivate(supplier)}
-                  aria-label={`Activate ${supplier.name}`}
-                >
-                  <Power className="size-3.5" />
-                  Activate
-                </Button>
-              )}
-            </div>
+                {supplier.is_active ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => onDeactivate(supplier)}
+                    aria-label={`Deactivate ${supplier.name}`}
+                  >
+                    <Power className="size-3.5" />
+                    Deactivate
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full text-brand-strong hover:bg-mint"
+                    onClick={() => onActivate(supplier)}
+                    aria-label={`Activate ${supplier.name}`}
+                  >
+                    <Power className="size-3.5" />
+                    Activate
+                  </Button>
+                )}
+              </div>
+            ) : null}
           </article>
         );
       })}

@@ -1,4 +1,4 @@
-export type Role = "admin" | "staff";
+export type Role = "admin" | "staff" | "customer";
 
 export type ProductLocation = "fridge" | "shelf";
 
@@ -12,6 +12,13 @@ export type StockMovementType =
   | "void";
 
 export type SaleStatus = "completed" | "voided";
+
+export type PaymentMethod =
+  | "aba_khqr"
+  | "alipay"
+  | "card"
+  | "pi_pay"
+  | "acleda";
 
 export interface User {
   id: string;
@@ -105,6 +112,7 @@ export interface SaleItem {
 export interface Sale {
   id: string;
   reference: string;
+  payment_method: PaymentMethod;
   subtotal: number;
   discount: number;
   total: number;
@@ -275,6 +283,33 @@ export interface Settings {
   currency: string;
   low_stock_default: number;
   receipt_footer: string;
+  khqr_data: string | null;
+}
+
+export interface KhqrResponse {
+  qr: string;
+}
+
+export interface StoreProduct {
+  id: string;
+  name: string;
+  package: string;
+  selling_price: number;
+  stock_qty: number;
+  location: "fridge" | "shelf";
+  stock_status: "in_stock" | "low_stock" | "out_of_stock";
+  category_name: string | null;
+}
+
+export interface StoreMenu {
+  items: StoreProduct[];
+  total: number;
+}
+
+export interface StoreCheckoutPayload {
+  items: Array<{ product_id: string; quantity: number }>;
+  payment_method?: PaymentMethod;
+  notes?: string;
 }
 
 export interface Paginated<T> {
@@ -318,6 +353,7 @@ export interface PurchaseListParams {
 export interface CreateSalePayload {
   items: Array<{ product_id: string; quantity: number }>;
   discount?: number;
+  payment_method?: PaymentMethod;
   notes?: string;
 }
 

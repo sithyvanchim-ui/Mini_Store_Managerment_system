@@ -8,6 +8,15 @@ import { useMe } from "@/hooks/use-me";
 import { useSalesList, useSaleDetail, useVoidSale } from "@/hooks/use-sales";
 import { queryKeys } from "@/lib/query-keys";
 import { formatDateTime, formatKHR, formatNumber } from "@/lib/utils";
+import type { PaymentMethod } from "@/types/api";
+
+const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+  aba_khqr: "ABA KHQR",
+  alipay: "Alipay",
+  card: "Credit / Debit Card",
+  pi_pay: "Pi Pay",
+  acleda: "ACLEDA",
+};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -231,6 +240,9 @@ export function SalesHistory() {
                         <TableCell className="pl-5">
                           <p className="font-semibold text-ink">
                             {sale.reference}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {PAYMENT_LABELS[sale.payment_method] ?? "ABA KHQR"}
                           </p>
                         </TableCell>
                         <TableCell className="text-muted-foreground">

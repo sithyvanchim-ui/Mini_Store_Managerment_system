@@ -9,12 +9,14 @@ from app.api.v1 import (
     dashboard,
     expenses,
     fund_requests,
+    payments,
     products,
     purchases,
     reports,
     sales,
     settings,
     stock,
+    store,
     suppliers,
     users,
 )
@@ -36,5 +38,7 @@ for module in (
     settings,
     fund_requests,
     expenses,
+    payments,
+    store,
 ):
     api_router.include_router(module.router)

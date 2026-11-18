@@ -4,6 +4,14 @@ Base URL: `/api/v1`
 Auth: httpOnly `access_token` cookie (JWT). All dashboard endpoints require a valid session.  
 Money: integer KHR. Dates: ISO 8601 UTC strings. Pagination: `{ items, total, page, page_size }`.
 
+## Roles
+
+Two roles: `admin` and `staff`.
+
+- **Read access:** both roles can `GET` everything on the dashboard (products, sales, purchases, stock, expenses, fund requests, analytics, …).
+- **Write access:** every mutating endpoint (`POST`/`PATCH`/`DELETE` on products, categories, suppliers, purchases, sales, stock adjustments, expenses, fund requests, daily closes, users, settings) returns **403** for staff — only admins can insert, update, or delete.
+- Staff keep `GET /auth/me`, `POST /auth/logout`, and `POST /auth/change-password` (their own password).
+
 ## Auth
 
 ### `POST /auth/login`
@@ -113,9 +121,11 @@ Header: optional `Idempotency-Key`.
 {
   "items": [{ "product_id": "uuid", "quantity": 2 }],
   "discount": 0,
+  "payment_method": "aba_khqr",
   "notes": ""
 }
 ```
+`payment_method` (admin-only field): `aba_khqr | alipay | card | pi_pay | acleda`. Default `aba_khqr`; older sales are backfilled as `aba_khqr`.
 Server computes unit prices and totals, locks products, rejects insufficient stock with `409`, decrements stock, writes `sale` movements, and returns the sale.
 
 `Sale`:
@@ -123,6 +133,7 @@ Server computes unit prices and totals, locks products, rejects insufficient sto
 {
   "id": "uuid",
   "reference": "MS-20261106-0001",
+  "payment_method": "aba_khqr",
   "subtotal": 6000,
   "discount": 0,
   "total": 6000,
@@ -262,8 +273,19 @@ Money already spent by the shop; deducted from ABA sales in the daily check. Cat
 
 ## Settings
 
-- `GET /settings` → `{ store_name, dorm_name, currency, low_stock_default, receipt_footer }`
-- `PATCH /settings` — admin only; partial fields.
+- `GET /settings` → `{ store_name, dorm_name, currency, low_stock_default, receipt_footer, khqr_data }`
+- `PATCH /settings` — admin only; partial fields. `khqr_data` holds the store's personal KHQR string (from their bank app) or a Bakong account id; it is the account payment QRs settle into.
+
+## Payments
+
+- `GET /payments/khqr?amount=&reference=` → `{ qr }` — builds a KHQR string locked to `amount` (and tagged with the sale `reference`), so the buyer can scan it with ABA, ACLEDA, Alipay, or any KHQR bank app and pay the exact total. Requires `khqr_data` to be configured; returns `409` otherwise.
+
+## Storefront (customers)
+
+- `GET /store/products?q=` → `{ items, total }` — the buyable menu: active products with price and availability. No cost prices or margins.
+- `POST /store/checkout` — header: optional `Idempotency-Key`. Body `{ items: [{ product_id, quantity }], payment_method, notes? }`. Creates a sale through the same engine as the POS (stock check `409`, decrements, movements). No discount — that is a staff decision.
+- `GET /store/orders` — the signed-in customer's own purchase history.
+- Returns the same `Sale` shape as `POST /sales`; for customer checkouts `sold_by_name` is the buyer.
 
 ## Errors
 
@@ -276,6 +298,13 @@ Status codes: `400` validation, `401` unauthenticated, `403` forbidden, `404` mi
 
 - `admin@ministore.local` / `Admin123!`
 - `staff@ministore.local` / `Staff123!`
+- `customer@ministore.local` / `Customer123!` — sees the storefront only
+
+## Roles
+
+- **admin** — full access, every write.
+- **staff** — reads the whole dashboard; no writes.
+- **customer** — storefront only: `GET /store/products`, `POST /store/checkout`, `GET /store/orders`, plus `GET /payments/khqr` and own-password change. Every dashboard endpoint answers `403` for customers. Customer accounts are created and managed by admins in **Team**; there is no self-registration.
 
 Email letters use a relaxed validation (simple `local@domain.tld` shape) rather
 than Pydantic's `EmailStr`, because `.local` — the demo accounts' domain — is a

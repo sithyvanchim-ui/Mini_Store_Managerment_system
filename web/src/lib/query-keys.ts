@@ -33,6 +33,7 @@ export const queryKeys = {
     all: ["sales"] as const,
     list: (params: object) => ["sales", "list", params] as const,
     detail: (id: string) => ["sales", "detail", id] as const,
+    khqr: (amount: number) => ["sales", "khqr", amount] as const,
   },
   stock: {
     all: ["stock"] as const,
@@ -68,5 +69,10 @@ export const queryKeys = {
     all: ["expenses"] as const,
     list: (params: object) => ["expenses", "list", params] as const,
     today: ["expenses", "today"] as const,
+  },
+  store: {
+    all: ["store"] as const,
+    menu: (q: string) => ["store", "menu", q] as const,
+    orders: ["store", "orders"] as const,
   },
 };

@@ -84,6 +84,7 @@ export function TeamTable({
                 <SelectContent className="rounded-lg">
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="staff">Staff</SelectItem>
+                  <SelectItem value="customer">Customer</SelectItem>
                 </SelectContent>
               </Select>
             </TableCell>

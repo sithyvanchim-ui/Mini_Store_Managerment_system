@@ -40,8 +40,11 @@ import {
 } from "@/hooks/use-purchases";
 import { useAllProducts } from "@/hooks/use-products";
 import { useAllSuppliers } from "@/hooks/use-suppliers";
+import { useMe } from "@/hooks/use-me";
 
 export default function PurchasesPage() {
+  const me = useMe();
+  const isAdmin = me.data?.user.role === "admin";
   const [page, setPage] = useState(1);
   const [supplierId, setSupplierId] = useState("all");
   const [from, setFrom] = useState("");
@@ -101,13 +104,15 @@ export default function PurchasesPage() {
         title="Purchases"
         description="Supplier deliveries, restock quantities, and the cost of keeping the store full."
         actions={
-          <Button
-            className="rounded-full bg-brand px-4 text-white hover:bg-brand-strong"
-            onClick={() => setFormOpen(true)}
-          >
-            <Plus className="size-4" />
-            New purchase
-          </Button>
+          isAdmin ? (
+            <Button
+              className="rounded-full bg-brand px-4 text-white hover:bg-brand-strong"
+              onClick={() => setFormOpen(true)}
+            >
+              <Plus className="size-4" />
+              New purchase
+            </Button>
+          ) : null
         }
       />
 
@@ -273,7 +278,7 @@ export default function PurchasesPage() {
                 >
                   Clear filters
                 </Button>
-              ) : (
+              ) : isAdmin ? (
                 <Button
                   className="rounded-full bg-brand text-white hover:bg-brand-strong"
                   onClick={() => setFormOpen(true)}
@@ -281,7 +286,7 @@ export default function PurchasesPage() {
                   <Plus className="size-4" />
                   New purchase
                 </Button>
-              )
+              ) : null
             }
           />
         ) : (

@@ -37,3 +37,10 @@ async def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != "admin":
         raise ApiError(403, "Administrator access required.", "forbidden")
     return user
+
+
+async def require_staff(user: User = Depends(get_current_user)) -> User:
+    """Dashboard access: admins and staff only — customers shop in the store."""
+    if user.role == "customer":
+        raise ApiError(403, "This area is for store staff.", "forbidden")
+    return user

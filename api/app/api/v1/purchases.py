@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import require_admin, require_staff
 from app.core.errors import ApiError
 from app.models import Purchase, User
 from app.schemas.common import Page
@@ -26,7 +26,7 @@ async def list_purchases(
     to_value: str | None = Query(default=None, alias="to"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> Page[PurchaseRead]:
     conditions = []
@@ -59,7 +59,7 @@ async def list_purchases(
 @router.post("", response_model=PurchaseRead, status_code=201)
 async def create_purchase(
     payload: PurchaseCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> PurchaseRead:
     purchase = await _create_purchase(db, payload=payload, user=user)
@@ -69,10 +69,14 @@ async def create_purchase(
 @router.get("/{purchase_id}", response_model=PurchaseRead)
 async def get_purchase(
     purchase_id: UUID,
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> PurchaseRead:
     purchase = await _load_purchase(db, purchase_id)
     if purchase is None:
         raise ApiError(404, "Purchase not found.", "purchase_not_found")
     return PurchaseRead.model_validate(purchase)
+
+
+
+

@@ -7,7 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import require_admin, require_staff
 from app.core.errors import ApiError
 from app.models import Category, Product, User
 from app.schemas.common import Page
@@ -43,7 +43,7 @@ async def list_products(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500),
     sort: str = Query(default="name"),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> Page[ProductRead]:
     conditions = []
@@ -104,7 +104,7 @@ async def list_products(
 @router.get("/{product_id}", response_model=ProductRead)
 async def get_product(
     product_id: UUID,
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> ProductRead:
     return ProductRead.model_validate(await _get_product(db, product_id))
@@ -113,7 +113,7 @@ async def get_product(
 @router.post("", response_model=ProductRead)
 async def create_product(
     payload: ProductCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> ProductRead:
     category = await db.get(Category, payload.category_id)
@@ -158,7 +158,7 @@ async def create_product(
 async def update_product(
     product_id: UUID,
     payload: ProductUpdate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> ProductRead:
     product = await _get_product(db, product_id)
@@ -206,7 +206,7 @@ async def update_product(
 async def adjust_stock(
     product_id: UUID,
     payload: StockAdjustRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> ProductRead:
     product = await _get_product(db, product_id)
@@ -253,3 +253,7 @@ async def adjust_stock(
     await db.commit()
     refreshed = await _get_product(db, product_id)
     return ProductRead.model_validate(refreshed)
+
+
+
+

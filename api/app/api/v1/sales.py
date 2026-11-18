@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import require_admin, require_staff
 from app.core.errors import ApiError
 from app.models import Sale, User
 from app.schemas.common import Page
@@ -50,7 +50,7 @@ async def _sale_page(
 async def create_sale(
     payload: SaleCreate,
     idempotency_key: str | None = Header(default=None),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> SaleRead:
     sale = await _create_sale(
@@ -70,7 +70,7 @@ async def list_sales(
     to_value: str | None = Query(default=None, alias="to"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> Page[SaleRead]:
     conditions = []
@@ -91,7 +91,7 @@ async def list_sales(
 @router.get("/{sale_id}", response_model=SaleRead)
 async def get_sale(
     sale_id: UUID,
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> SaleRead:
     sale = await _load_sale(db, sale_id)
@@ -106,3 +106,7 @@ async def void_sale_endpoint(
 ) -> SaleRead:
     sale = await _void_sale(db, sale_id=sale_id, user=admin)
     return SaleRead.model_validate(sale)
+
+
+
+

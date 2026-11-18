@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import require_admin, require_staff
 from app.core.errors import ApiError
 from app.models import Expense, User
 from app.schemas.common import Page
@@ -32,7 +32,7 @@ async def list_expenses(
     category: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> Page[ExpenseRead]:
     conditions = []
@@ -78,7 +78,7 @@ async def list_expenses(
 
 @router.get("/today")
 async def today_expenses(
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str | int]:
     today = datetime.now(UTC).date()
@@ -93,7 +93,7 @@ async def today_expenses(
 @router.post("", response_model=ExpenseRead)
 async def create_expense(
     payload: ExpenseCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> ExpenseRead:
     if payload.business_date > datetime.now(UTC).date():
@@ -145,3 +145,7 @@ async def delete_expense(
         entity_id=expense.description,
     )
     await db.commit()
+
+
+
+

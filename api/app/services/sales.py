@@ -94,6 +94,7 @@ async def create_sale(
 
     sale = Sale(
         reference=reference,
+        payment_method=payload.payment_method,
         subtotal=subtotal,
         discount=payload.discount,
         total=total,

@@ -32,7 +32,7 @@ const userSchema = z.object({
     .min(8, "Use at least 8 characters")
     .regex(/[A-Za-z]/, "Include at least one letter")
     .regex(/[0-9]/, "Include at least one number"),
-  role: z.enum(["admin", "staff"]),
+  role: z.enum(["admin", "staff", "customer"]),
 });
 
 type UserValues = z.infer<typeof userSchema>;
@@ -174,6 +174,9 @@ export function UserFormDialog({
                     </SelectItem>
                     <SelectItem value="admin">
                       Admin — also users, settings, and voids
+                    </SelectItem>
+                    <SelectItem value="customer">
+                      Customer — buys from the store page only
                     </SelectItem>
                   </SelectContent>
                 </Select>

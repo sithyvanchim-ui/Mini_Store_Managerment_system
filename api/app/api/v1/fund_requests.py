@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import require_admin, require_staff
 from app.core.errors import ApiError
 from app.models import FundRequest, User
 from app.schemas.common import Page
@@ -39,7 +39,7 @@ async def list_fund_requests(
     mine: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> Page[FundRequestRead]:
     conditions = []
@@ -74,7 +74,7 @@ async def list_fund_requests(
 
 @router.get("/pending-count")
 async def pending_count(
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, int]:
     count = await db.scalar(
@@ -88,7 +88,7 @@ async def pending_count(
 @router.post("", response_model=FundRequestRead)
 async def create_fund_request(
     payload: FundRequestCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> FundRequestRead:
     now = datetime.now(UTC)
@@ -190,3 +190,7 @@ async def disburse_fund_request(
     await db.commit()
     await db.refresh(fund_request)
     return FundRequestRead.model_validate(fund_request)
+
+
+
+

@@ -44,6 +44,7 @@ const storeSchema = z.object({
   receipt_footer: z
     .string()
     .max(280, "Keep the footer under 280 characters"),
+  khqr_data: z.string().max(2000, "That KHQR value is too long"),
 });
 
 type StoreValues = z.infer<typeof storeSchema>;
@@ -73,6 +74,7 @@ export function StoreSettingsForm({ readOnly }: StoreSettingsFormProps) {
       currency: "KHR",
       low_stock_default: 6,
       receipt_footer: "",
+      khqr_data: "",
     },
   });
 
@@ -84,6 +86,7 @@ export function StoreSettingsForm({ readOnly }: StoreSettingsFormProps) {
       currency: settings.data.currency === "USD" ? "USD" : "KHR",
       low_stock_default: settings.data.low_stock_default,
       receipt_footer: settings.data.receipt_footer ?? "",
+      khqr_data: settings.data.khqr_data ?? "",
     });
   }, [settings.data, reset]);
 
@@ -280,6 +283,33 @@ export function StoreSettingsForm({ readOnly }: StoreSettingsFormProps) {
           ) : (
             <p className="text-[11px] text-muted-foreground">
               Shown at the bottom of every printed receipt.
+            </p>
+          )}
+        </div>
+
+        <div className="mt-4 space-y-2">
+          <Label htmlFor="khqr_data" className="text-xs font-bold text-ink">
+            KHQR payment account
+          </Label>
+          <Textarea
+            id="khqr_data"
+            rows={3}
+            className={cn(
+              "min-h-24 rounded-2xl border-border bg-background/60 px-3.5 py-3 font-mono text-xs",
+            )}
+            placeholder="Paste your personal KHQR string from your bank app, or a Bakong account id like name@aba"
+            disabled={readOnly}
+            aria-invalid={Boolean(errors.khqr_data)}
+            {...register("khqr_data")}
+          />
+          {errors.khqr_data ? (
+            <p className="text-xs font-medium text-destructive">
+              {errors.khqr_data.message}
+            </p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              Used to build the payment QR at checkout. The buyer scans it with
+              ABA, ACLEDA, or any KHQR bank app to pay the exact sale amount.
             </p>
           )}
         </div>

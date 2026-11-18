@@ -13,7 +13,7 @@ import {
   useUsers,
 } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
-import type { User } from "@/types/api";
+import type { Role, User } from "@/types/api";
 
 export function TeamSection() {
   const usersQuery = useUsers();
@@ -53,7 +53,7 @@ export function TeamSection() {
     );
   };
 
-  const setRole = (user: User, role: "admin" | "staff") => {
+  const setRole = (user: User, role: Role) => {
     setActionError(null);
     updateUser.mutate(
       { id: user.id, role },

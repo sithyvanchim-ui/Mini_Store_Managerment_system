@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import require_staff
 from app.core.errors import ApiError
 from app.models import Product, Sale, SaleItem, StockMovement, User
 from app.schemas.common import Page
@@ -85,7 +85,7 @@ def _alerts_for(products: list[Product]) -> list[LowStockItem]:
 @router.get("/summary", response_model=StockSummary)
 async def stock_summary(
     month: str | None = Query(default=None),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> StockSummary:
     month_value = month or month_key()
@@ -236,7 +236,7 @@ async def stock_summary(
 
 @router.get("/alerts", response_model=list[LowStockItem])
 async def stock_alerts(
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[LowStockItem]:
     products = (
@@ -258,7 +258,7 @@ async def stock_movements(
     to_value: str | None = Query(default=None, alias="to"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=30, ge=1, le=500),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> Page[StockMovementRead]:
     conditions = []
@@ -299,7 +299,7 @@ async def stock_movements(
 @router.get("/monthly", response_model=list[MonthlyStock])
 async def stock_monthly(
     months: int = Query(default=6, ge=1, le=24),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[MonthlyStock]:
     """Monthly sales history with reconstructed closing stock counts.
@@ -366,3 +366,7 @@ async def stock_monthly(
             )
         )
     return response
+
+
+
+

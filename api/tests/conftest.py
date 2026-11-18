@@ -58,9 +58,17 @@ async def clean_db() -> AsyncIterator[None]:
 class Seed:
     """Convenience container for seeded users and reference data."""
 
-    def __init__(self, admin: User, staff: User, category: Category, supplier: Supplier):
+    def __init__(
+        self,
+        admin: User,
+        staff: User,
+        customer: User,
+        category: Category,
+        supplier: Supplier,
+    ):
         self.admin = admin
         self.staff = staff
+        self.customer = customer
         self.category = category
         self.supplier = supplier
 
@@ -71,6 +79,10 @@ class Seed:
     @property
     def staff_email(self) -> str:
         return self.staff.email
+
+    @property
+    def customer_email(self) -> str:
+        return self.customer.email
 
 
 @pytest_asyncio.fixture
@@ -88,19 +100,32 @@ async def seed() -> Seed:
             password_hash=hash_password("Staff123!"),
             role="staff",
         )
+        customer = User(
+            name="Chan Customer",
+            email="customer@ministore.local",
+            password_hash=hash_password("Customer123!"),
+            role="customer",
+        )
         category = Category(name="Drinks", color="#0FB5A0")
         supplier = Supplier(
             name="Phnom Fridge Supply",
             contact_name="Vuthy",
             phone="012345678",
         )
-        session.add_all([admin, staff, category, supplier])
+        session.add_all([admin, staff, customer, category, supplier])
         await session.commit()
         await session.refresh(admin)
         await session.refresh(staff)
+        await session.refresh(customer)
         await session.refresh(category)
         await session.refresh(supplier)
-        return Seed(admin=admin, staff=staff, category=category, supplier=supplier)
+        return Seed(
+            admin=admin,
+            staff=staff,
+            customer=customer,
+            category=category,
+            supplier=supplier,
+        )
 
 
 @pytest_asyncio.fixture
@@ -127,6 +152,12 @@ async def admin_client(client: AsyncClient, seed: Seed) -> AsyncClient:
 @pytest_asyncio.fixture
 async def staff_client(client: AsyncClient, seed: Seed) -> AsyncClient:
     await login(client, seed.staff_email, "Staff123!")
+    return client
+
+
+@pytest_asyncio.fixture
+async def customer_client(client: AsyncClient, seed: Seed) -> AsyncClient:
+    await login(client, seed.customer_email, "Customer123!")
     return client
 
 

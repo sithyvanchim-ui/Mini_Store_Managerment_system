@@ -59,7 +59,7 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        CheckConstraint("role IN ('admin', 'staff')", name="ck_users_role"),
+        CheckConstraint("role IN ('admin', 'staff', 'customer')", name="ck_users_role"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -214,10 +214,17 @@ class Sale(Base):
         CheckConstraint("discount >= 0", name="ck_sales_discount_nonnegative"),
         CheckConstraint("total >= 0", name="ck_sales_total_nonnegative"),
         CheckConstraint("status IN ('completed', 'voided')", name="ck_sales_status"),
+        CheckConstraint(
+            "payment_method IN ('aba_khqr', 'alipay', 'card', 'pi_pay', 'acleda')",
+            name="ck_sales_payment_method",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     reference: Mapped[str] = mapped_column(String(40), nullable=False, unique=True)
+    payment_method: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="aba_khqr"
+    )
     subtotal: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     discount: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -377,6 +384,9 @@ class AppSettings(Base):
     receipt_footer: Mapped[str] = mapped_column(
         Text, nullable=False, default="Thank you! Please keep the fridge tidy."
     )
+    # The shop's personal KHQR string (from their bank app) or a Bakong
+    # account id such as "name@aba". Used to build payment QRs per sale.
+    khqr_data: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         UTCDateTime, nullable=False, default=utcnow, onupdate=utcnow
     )

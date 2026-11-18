@@ -20,7 +20,7 @@ class UserRead(BaseModel):
     id: UUID
     name: str
     email: str
-    role: Literal["admin", "staff"]
+    role: Literal["admin", "staff", "customer"]
     is_active: bool
     created_at: datetime
 
@@ -38,11 +38,11 @@ class UserCreate(EmailValidationMixin):
     name: str = Field(min_length=1, max_length=120)
     email: RelaxedEmail
     password: str = Field(min_length=8, max_length=200)
-    role: Literal["admin", "staff"] = "staff"
+    role: Literal["admin", "staff", "customer"] = "staff"
 
 
 class UserUpdate(EmailValidationMixin):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     email: RelaxedEmail | None = None
-    role: Literal["admin", "staff"] | None = None
+    role: Literal["admin", "staff", "customer"] | None = None
     is_active: bool | None = None

@@ -3,15 +3,28 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { BadgeCheck } from "lucide-react";
 import { PosCatalogue } from "@/components/sales/pos-catalogue";
 import { PosCart, type CartLine } from "@/components/sales/pos-cart";
+import {
+  PAYMENT_LABELS,
+  PAYMENT_METHODS,
+  PaymentQrStep,
+} from "@/components/sales/payment-qr-step";
 import { ReceiptDialog } from "@/components/sales/receipt-dialog";
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
-import { formatKHR } from "@/lib/utils";
+import { cn, formatKHR } from "@/lib/utils";
 import { useCreateSale, usePosCategories, usePosProducts } from "@/hooks/use-pos";
-import type { CreateSalePayload, Product, Sale } from "@/types/api";
+import type { CreateSalePayload, PaymentMethod, Product, Sale } from "@/types/api";
 
 function newIdempotencyKey(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -32,7 +45,9 @@ export function PosScreen() {
   const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
-  const [abaConfirmOpen, setAbaConfirmOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("aba_khqr");
+  const [payStep, setPayStep] = useState<"method" | "qr">("method");
 
   const createSale = useCreateSale();
 
@@ -119,6 +134,7 @@ export function PosScreen() {
         quantity: line.quantity,
       })),
       discount: effectiveDiscount,
+      payment_method: payMethod,
       ...(notes.trim() ? { notes: notes.trim() } : {}),
     };
 
@@ -128,6 +144,7 @@ export function PosScreen() {
         onSuccess: (sale) => {
           setReceiptSale(sale);
           setReceiptOpen(true);
+          setPayOpen(false);
           resetCart();
           setIdempotencyKey(newIdempotencyKey());
           toast.success(`Sale ${sale.reference} completed`);
@@ -151,7 +168,9 @@ export function PosScreen() {
 
   function handleCharge() {
     if (lines.length === 0) return;
-    setAbaConfirmOpen(true);
+    setPayMethod("aba_khqr");
+    setPayStep("method");
+    setPayOpen(true);
   }
 
   return (
@@ -191,18 +210,94 @@ export function PosScreen() {
         </div>
       </div>
 
-      <ConfirmDialog
-        open={abaConfirmOpen}
-        onOpenChange={setAbaConfirmOpen}
-        title="Charge with ABA?"
-        description={`Confirm the customer has transferred ${formatKHR(total)} by ABA before completing this sale.`}
-        confirmLabel="Yes, charge"
-        onConfirm={() => {
-          setAbaConfirmOpen(false);
-          submitSale();
+      <Dialog
+        open={payOpen}
+        onOpenChange={(open) => {
+          if (!open) setPayOpen(false);
         }}
-        loading={createSale.isPending}
-      />
+      >
+        <DialogContent className="rounded-[24px] sm:max-w-md">
+          {payStep === "method" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-heading text-xl font-black text-ink">
+                  Choose payment method
+                </DialogTitle>
+                <DialogDescription>
+                  The buyer pays {formatKHR(total)} electronically — no cash.
+                  Pick the channel they are paying with.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                {PAYMENT_METHODS.map((method) => {
+                  const selected = method.value === payMethod;
+                  return (
+                    <button
+                      key={method.value}
+                      type="button"
+                      onClick={() => setPayMethod(method.value)}
+                      aria-pressed={selected}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors",
+                        selected
+                          ? "border-brand bg-mint/60"
+                          : "border-border/70 bg-card hover:bg-mint/40",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex size-9 shrink-0 items-center justify-center rounded-full",
+                          selected
+                            ? "bg-brand text-white"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {method.icon}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-ink">
+                          {method.label}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {method.hint}
+                        </span>
+                      </span>
+                      {selected ? (
+                        <BadgeCheck className="size-5 shrink-0 text-brand-strong" />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full text-xs font-bold"
+                  onClick={() => setPayOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  className="rounded-full text-xs font-bold"
+                  onClick={() => setPayStep("qr")}
+                >
+                  Next · {PAYMENT_LABELS[payMethod]}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <PaymentQrStep
+              total={total}
+              payMethod={payMethod}
+              onBack={() => setPayStep("method")}
+              onPaid={submitSale}
+              paying={createSale.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <ReceiptDialog
         sale={receiptSale}

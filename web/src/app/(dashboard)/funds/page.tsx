@@ -380,13 +380,15 @@ export default function FundsPage() {
         title="Fund requests"
         description="Ask the main ABA account for money to buy products and supplies, and track approvals."
         actions={
-          <Button
-            className="rounded-full text-xs font-bold"
-            onClick={() => setRequestOpen(true)}
-          >
-            <Plus className="size-4" />
-            Request money
-          </Button>
+          isAdmin ? (
+            <Button
+              className="rounded-full text-xs font-bold"
+              onClick={() => setRequestOpen(true)}
+            >
+              <Plus className="size-4" />
+              Request money
+            </Button>
+          ) : null
         }      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

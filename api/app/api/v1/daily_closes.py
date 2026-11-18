@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import require_admin, require_staff
 from app.models import DailyClose, User
 from app.schemas.common import Page
 from app.schemas.daily_closes import DailyCloseCreate, DailyClosePreview, DailyCloseRead
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/daily-closes", tags=["daily-closes"])
 
 @router.get("/today", response_model=DailyClosePreview)
 async def today_close(
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> DailyClosePreview:
     return await build_preview(db, date.today())
@@ -29,7 +29,7 @@ async def today_close(
 @router.post("", response_model=DailyCloseRead, status_code=201)
 async def create_daily_close(
     payload: DailyCloseCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> DailyCloseRead:
     close = await upsert_daily_close(db, payload=payload, user=user)
@@ -42,7 +42,7 @@ async def list_daily_closes(
     to_value: str | None = Query(default=None, alias="to"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> Page[DailyCloseRead]:
     conditions = []
@@ -69,3 +69,7 @@ async def list_daily_closes(
         page=page,
         page_size=page_size,
     )
+
+
+
+

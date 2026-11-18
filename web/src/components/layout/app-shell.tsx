@@ -61,6 +61,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [isError, router]);
 
+  // Customers only shop in the storefront — the staff dashboard is closed
+  // to them (the API enforces this with 403s as well).
+  useEffect(() => {
+    if (data?.user?.role === "customer") {
+      router.replace("/store");
+    }
+  }, [data?.user?.role, router]);
+
   if (isPending || isError || !data?.user) {
     return <ShellSkeleton />;
   }

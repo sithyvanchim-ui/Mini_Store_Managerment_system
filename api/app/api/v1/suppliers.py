@@ -7,7 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import require_admin, require_staff
 from app.core.errors import ApiError
 from app.models import Purchase, Supplier, User
 from app.schemas.common import Page
@@ -22,7 +22,7 @@ async def list_suppliers(
     q: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> Page[SupplierRead]:
     conditions = []
@@ -57,7 +57,7 @@ async def list_suppliers(
 @router.post("", response_model=SupplierRead)
 async def create_supplier(
     payload: SupplierCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> SupplierRead:
     name = payload.name.strip()
@@ -94,7 +94,7 @@ async def create_supplier(
 async def update_supplier(
     supplier_id: UUID,
     payload: SupplierUpdate,
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> SupplierRead:
     supplier = await db.get(Supplier, supplier_id)
@@ -156,3 +156,7 @@ async def delete_supplier(
     )
     await db.commit()
     return Response(status_code=204)
+
+
+
+

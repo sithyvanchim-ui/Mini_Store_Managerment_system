@@ -18,6 +18,7 @@ export interface UpdateSettingsPayload {
   currency?: string;
   low_stock_default?: number;
   receipt_footer?: string;
+  khqr_data?: string | null;
 }
 
 export function useUpdateSettings() {

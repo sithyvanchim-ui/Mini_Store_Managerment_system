@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import require_staff
 from app.models import Sale, SaleItem, User
 from app.schemas.reports import ReportSalesPoint, StaffPerformance
 from app.services.utils import day_bounds, parse_range
@@ -33,7 +33,7 @@ async def sales_report(
     from_value: str | None = Query(default=None, alias="from"),
     to_value: str | None = Query(default=None, alias="to"),
     group_by: str = Query(default="day"),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[ReportSalesPoint]:
     if group_by not in {"day", "month"}:
@@ -110,7 +110,7 @@ async def sales_report(
 async def staff_performance(
     from_value: str | None = Query(default=None, alias="from"),
     to_value: str | None = Query(default=None, alias="to"),
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(require_staff),
     db: AsyncSession = Depends(get_db),
 ) -> list[StaffPerformance]:
     start, end = await _range_or_default(from_value, to_value)
@@ -129,6 +129,8 @@ async def staff_performance(
             Sale.status == "completed",
             Sale.created_at >= start,
             Sale.created_at < end,
+            # Customers check out their own orders — they are not sellers.
+            User.role.in_(("admin", "staff")),
         )
         .group_by(Sale.sold_by_id, User.name)
         .order_by(func.sum(Sale.total).desc())
@@ -143,3 +145,7 @@ async def staff_performance(
         )
         for row in rows.all()
     ]
+
+
+
+

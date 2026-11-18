@@ -37,6 +37,8 @@ interface ProductsTableProps {
   onEdit: (product: Product) => void;
   onAdjust: (product: Product) => void;
   onToggleActive: (product: Product) => void;
+  /** When false, the actions column is hidden (staff are read-only). */
+  canManage?: boolean;
 }
 
 export function ProductsTable({
@@ -44,6 +46,7 @@ export function ProductsTable({
   onEdit,
   onAdjust,
   onToggleActive,
+  canManage = true,
 }: ProductsTableProps) {
   return (
     <Table className="min-w-[1080px]">
@@ -79,9 +82,11 @@ export function ProductsTable({
           <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             Status
           </TableHead>
-          <TableHead className="w-12 pr-1 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            <span className="sr-only">Actions</span>
-          </TableHead>
+          {canManage ? (
+            <TableHead className="w-12 pr-1 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="sr-only">Actions</span>
+            </TableHead>
+          ) : null}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -176,38 +181,40 @@ export function ProductsTable({
             <TableCell>
               <StockStatusBadge status={product.stock_status} />
             </TableCell>
-            <TableCell className="pr-1 text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="rounded-full"
-                    aria-label={`Actions for ${product.name}`}
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 rounded-xl">
-                  <DropdownMenuItem onSelect={() => onEdit(product)}>
-                    <Pencil className="size-4" />
-                    Edit product
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => onAdjust(product)}>
-                    <ArrowUpDown className="size-4" />
-                    Adjust stock
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant={product.is_active ? "destructive" : "default"}
-                    onSelect={() => onToggleActive(product)}
-                  >
-                    <Power className="size-4" />
-                    {product.is_active ? "Deactivate" : "Activate"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
+            {canManage ? (
+              <TableCell className="pr-1 text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="rounded-full"
+                      aria-label={`Actions for ${product.name}`}
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                    <DropdownMenuItem onSelect={() => onEdit(product)}>
+                      <Pencil className="size-4" />
+                      Edit product
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onAdjust(product)}>
+                      <ArrowUpDown className="size-4" />
+                      Adjust stock
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant={product.is_active ? "destructive" : "default"}
+                      onSelect={() => onToggleActive(product)}
+                    >
+                      <Power className="size-4" />
+                      {product.is_active ? "Deactivate" : "Activate"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            ) : null}
           </TableRow>
         ))}
       </TableBody>
