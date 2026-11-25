@@ -27,14 +27,16 @@ class StoreMenu(BaseModel):
 
 
 def _store_product(product: Product) -> StoreProductRead:
+    # Customers only see what is on display in the store, not the units held
+    # back for counter sales.
     return StoreProductRead(
         id=product.id,
         name=product.name,
         package=product.package,
         selling_price=product.selling_price,
-        stock_qty=product.stock_qty,
+        stock_qty=product.store_qty,
         location=product.location,
-        stock_status=product.stock_status,
+        stock_status=product.store_status,
         category_name=product.category.name if product.category else None,
     )
 
@@ -86,6 +88,7 @@ async def store_checkout(
         ),
         user=user,
         idempotency_key=idempotency_key.strip() if idempotency_key else None,
+        channel="store",
     )
     return SaleRead.model_validate(sale)
 

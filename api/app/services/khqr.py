@@ -68,7 +68,7 @@ def build_khqr(
     amount: int,
     currency: str = CURRENCY_KHR,
     reference: str | None = None,
-    merchant_name: str = "MiniStore",
+    merchant_name: str = "MiniStoreCR",
     city: str = "Phnom Penh",
 ) -> str:
     """Return a KHQR string charging ``amount`` to the store's account."""

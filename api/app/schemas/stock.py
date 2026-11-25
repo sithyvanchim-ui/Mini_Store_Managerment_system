@@ -16,7 +16,7 @@ class StockMovementRead(BaseModel):
     product_id: UUID
     product_code: str
     product_name: str
-    type: Literal["restock", "sale", "adjustment", "waste", "void"]
+    type: Literal["restock", "sale", "adjustment", "waste", "void", "transfer"]
     quantity_delta: int
     unit_cost: int | None
     reference: str | None
@@ -30,8 +30,11 @@ class LowStockItem(BaseModel):
     name: str
     code: str
     stock_qty: int
+    store_qty: int = 0
+    sell_qty: int = 0
     threshold: int
     status: Literal["in_stock", "low_stock", "out_of_stock"]
+    store_status: Literal["in_stock", "low_stock", "out_of_stock"] = "in_stock"
     slot_code: str | None
     category: str
 
@@ -65,6 +68,8 @@ class StockSummary(BaseModel):
     month: str
     product_count: int
     total_units: int
+    store_units: int = 0
+    sell_units: int = 0
     inventory_value: int
     retail_value: int
     units_sold: int

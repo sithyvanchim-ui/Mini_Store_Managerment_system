@@ -50,6 +50,7 @@ class SaleRead(BaseModel):
     discount: int
     total: int
     status: Literal["completed", "voided"]
+    channel: Literal["counter", "store"] = "counter"
     sold_by_name: str
     notes: str | None
     created_at: datetime

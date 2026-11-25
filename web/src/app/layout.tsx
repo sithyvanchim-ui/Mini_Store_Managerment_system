@@ -17,8 +17,8 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: {
-    default: "MiniStore — Dorm Operations",
-    template: "%s · MiniStore",
+    default: "MiniStoreCR — Dorm Operations",
+    template: "%s · MiniStoreCR",
   },
   description:
     "Inventory, restocking, point of sale, and daily reconciliation for a dormitory mini-store.",

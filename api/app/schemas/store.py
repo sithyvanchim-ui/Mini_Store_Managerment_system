@@ -13,6 +13,12 @@ from app.schemas.sales import PaymentMethod
 
 
 class StoreProductRead(BaseModel):
+    """A product as customers see it.
+
+    ``stock_qty`` and ``stock_status`` describe the store display only —
+    units held for counter sales are never visible to customers.
+    """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID

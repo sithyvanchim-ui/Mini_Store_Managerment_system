@@ -56,4 +56,34 @@ test.describe("Authentication", () => {
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/^password$/i)).toBeVisible();
   });
+
+  test("customer demo card is offered and opens the customer dashboard", async ({
+    page,
+  }) => {
+    await page.goto("/login");
+
+    const card = page.getByRole("button", { name: /customer demo/i });
+    await expect(card).toBeVisible();
+    await card.click();
+
+    await expect(page.getByLabel(/email/i)).toHaveValue(
+      demoAccounts.customer.email,
+    );
+    await expect(page.getByLabel(/^password$/i)).toHaveValue(
+      demoAccounts.customer.password,
+    );
+
+    await page
+      .getByRole("button", { name: /sign in|log in|login/i })
+      .click();
+
+    await test.step("redirected to the customer dashboard", async () => {
+      await page.waitForURL((url) => url.pathname === "/store", {
+        timeout: 20_000,
+      });
+      await expect(
+        page.getByRole("heading", { level: 1, name: /my dashboard/i }),
+      ).toBeVisible();
+    });
+  });
 });

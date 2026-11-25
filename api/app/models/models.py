@@ -94,6 +94,8 @@ class Product(Base):
         CheckConstraint("cost_price >= 0", name="ck_products_cost_price_nonnegative"),
         CheckConstraint("selling_price >= 0", name="ck_products_selling_price_nonnegative"),
         CheckConstraint("stock_qty >= 0", name="ck_products_stock_nonnegative"),
+        CheckConstraint("store_qty >= 0", name="ck_products_store_nonnegative"),
+        CheckConstraint("store_qty <= stock_qty", name="ck_products_store_within_stock"),
         CheckConstraint(
             "low_stock_threshold >= 0", name="ck_products_threshold_nonnegative"
         ),
@@ -110,6 +112,9 @@ class Product(Base):
     cost_price: Mapped[int] = mapped_column(Integer, nullable=False)
     selling_price: Mapped[int] = mapped_column(Integer, nullable=False)
     stock_qty: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Units placed in the store (customer-facing) — the rest of stock_qty is
+    # held for counter sales.
+    store_qty: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     low_stock_threshold: Mapped[int] = mapped_column(Integer, nullable=False, default=6)
     location: Mapped[str] = mapped_column(String(16), nullable=False, default="fridge")
     slot_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
@@ -126,10 +131,24 @@ class Product(Base):
         return self.selling_price - self.cost_price
 
     @property
+    def sell_qty(self) -> int:
+        """Units held for selling at the counter (not on display)."""
+        return self.stock_qty - self.store_qty
+
+    @property
     def stock_status(self) -> str:
         if self.stock_qty <= 0:
             return "out_of_stock"
         if self.stock_qty <= self.low_stock_threshold:
+            return "low_stock"
+        return "in_stock"
+
+    @property
+    def store_status(self) -> str:
+        """Availability in the customer store."""
+        if self.store_qty <= 0:
+            return "out_of_stock"
+        if self.store_qty <= self.low_stock_threshold:
             return "low_stock"
         return "in_stock"
 
@@ -214,6 +233,7 @@ class Sale(Base):
         CheckConstraint("discount >= 0", name="ck_sales_discount_nonnegative"),
         CheckConstraint("total >= 0", name="ck_sales_total_nonnegative"),
         CheckConstraint("status IN ('completed', 'voided')", name="ck_sales_status"),
+        CheckConstraint("channel IN ('counter', 'store')", name="ck_sales_channel"),
         CheckConstraint(
             "payment_method IN ('aba_khqr', 'alipay', 'card', 'pi_pay', 'acleda')",
             name="ck_sales_payment_method",
@@ -229,6 +249,9 @@ class Sale(Base):
     discount: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="completed")
+    # "counter" = staff POS sale, "store" = customer self-checkout. Voided
+    # sales are restored to the place they came from.
+    channel: Mapped[str] = mapped_column(String(16), nullable=False, default="counter")
     idempotency_key: Mapped[str | None] = mapped_column(
         String(120), nullable=True, unique=True
     )
@@ -288,7 +311,7 @@ class StockMovement(Base):
     __tablename__ = "stock_movements"
     __table_args__ = (
         CheckConstraint(
-            "type IN ('restock', 'sale', 'adjustment', 'waste', 'void')",
+            "type IN ('restock', 'sale', 'adjustment', 'waste', 'void', 'transfer')",
             name="ck_stock_movements_type",
         ),
     )
@@ -377,7 +400,7 @@ class AppSettings(Base):
     __tablename__ = "app_settings"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    store_name: Mapped[str] = mapped_column(String(120), nullable=False, default="MiniStore")
+    store_name: Mapped[str] = mapped_column(String(120), nullable=False, default="MiniStoreCR")
     dorm_name: Mapped[str] = mapped_column(String(120), nullable=False, default="Block C Dorm")
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="KHR")
     low_stock_default: Mapped[int] = mapped_column(Integer, nullable=False, default=6)
@@ -465,6 +488,51 @@ class Expense(Base):
     )
 
     created_by: Mapped[User] = relationship(foreign_keys=[created_by_id], lazy="selectin")
+
+    @property
+    def created_by_name(self) -> str:
+        return self.created_by.name if self.created_by else ""
+
+
+class Charge(Base):
+    """A charge of a product against the shop's ABA wallet."""
+
+    __tablename__ = "charges"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_charges_amount_positive"),
+        CheckConstraint(
+            "status IN ('pending', 'paid')", name="ck_charges_status"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    reference: Mapped[str] = mapped_column(String(40), nullable=False, unique=True)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    product_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("products.id"), nullable=False, index=True
+    )
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="pending", index=True
+    )
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        UTCDateTime, nullable=False, default=utcnow, index=True
+    )
+
+    product: Mapped[Product] = relationship(lazy="selectin")
+    created_by: Mapped[User] = relationship(foreign_keys=[created_by_id], lazy="selectin")
+
+    @property
+    def product_code(self) -> str:
+        return self.product.code if self.product else ""
+
+    @property
+    def product_name(self) -> str:
+        return self.product.name if self.product else ""
 
     @property
     def created_by_name(self) -> str:

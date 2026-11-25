@@ -16,6 +16,9 @@ from app.schemas.products import (
     ProductRead,
     ProductUpdate,
     StockAdjustRequest,
+    StockClearPlaceRequest,
+    StockInsertRequest,
+    StockTransferRequest,
 )
 from app.services.stock import add_stock_movement
 from app.services.utils import add_activity, manual_reference
@@ -133,6 +136,7 @@ async def create_product(
         cost_price=payload.cost_price,
         selling_price=payload.selling_price,
         stock_qty=payload.stock_qty,
+        store_qty=payload.store_qty,
         low_stock_threshold=payload.low_stock_threshold,
         location=payload.location,
         slot_code=payload.slot_code,
@@ -186,6 +190,17 @@ async def update_product(
     if "package" in data and data["package"] is not None:
         data["package"] = str(data["package"]).strip()
 
+    # Store stock is a subset of total stock — validate the resulting pair,
+    # not just the fields that were sent.
+    next_stock = data.get("stock_qty", product.stock_qty)
+    next_store = data.get("store_qty", product.store_qty)
+    if next_store > next_stock:
+        raise ApiError(
+            400,
+            "Store stock cannot exceed total stock.",
+            "invalid_store_stock",
+        )
+
     for field, value in data.items():
         setattr(product, field, value)
 
@@ -223,6 +238,10 @@ async def adjust_stock(
         )
 
     product.stock_qty = new_stock
+    # Waste or negative adjustments can cut into the store display; keep the
+    # split consistent.
+    if product.store_qty > new_stock:
+        product.store_qty = new_stock
     prefix = {
         "restock": "RESTOCK",
         "adjustment": "ADJUST",
@@ -246,6 +265,144 @@ async def adjust_stock(
             f"{payload.type.title()} {payload.quantity} x {product.name} "
             f"({reference})."
         ),
+        actor=user,
+        entity_type="product",
+        entity_id=str(product.id),
+    )
+    await db.commit()
+    refreshed = await _get_product(db, product_id)
+    return ProductRead.model_validate(refreshed)
+
+
+@router.post("/{product_id}/transfer-stock", response_model=ProductRead)
+async def transfer_stock(
+    product_id: UUID,
+    payload: StockTransferRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> ProductRead:
+    """Move units between the two stock places: store display and selling pool."""
+    product = await _get_product(db, product_id)
+
+    if payload.to == "store":
+        available = product.stock_qty - product.store_qty
+        if payload.quantity > available:
+            raise ApiError(
+                409,
+                f"Only {available} units of {product.name} are held for selling.",
+                "insufficient_stock",
+            )
+        product.store_qty += payload.quantity
+        note = f"Moved {payload.quantity} to the store display."
+    else:
+        if payload.quantity > product.store_qty:
+            raise ApiError(
+                409,
+                f"Only {product.store_qty} units of {product.name} are in the store.",
+                "insufficient_stock",
+            )
+        product.store_qty -= payload.quantity
+        note = f"Moved {payload.quantity} back to selling."
+
+    reference = manual_reference("TRANSFER")
+    add_stock_movement(
+        db,
+        product=product,
+        movement_type="transfer",
+        quantity_delta=0,
+        unit_cost=product.cost_price,
+        reference=reference,
+        note=payload.note or note,
+        created_by=user,
+    )
+    add_activity(
+        db,
+        activity_type="transfer",
+        message=f"{product.name}: {note} ({reference}).",
+        actor=user,
+        entity_type="product",
+        entity_id=str(product.id),
+    )
+    await db.commit()
+    refreshed = await _get_product(db, product_id)
+    return ProductRead.model_validate(refreshed)
+
+
+@router.post("/{product_id}/insert-stock", response_model=ProductRead)
+async def insert_stock(
+    product_id: UUID,
+    payload: StockInsertRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> ProductRead:
+    """Add units to one stock place: the store display or the selling pool."""
+    product = await _get_product(db, product_id)
+    if payload.place == "store":
+        product.stock_qty += payload.quantity
+        product.store_qty += payload.quantity
+        note = f"Inserted {payload.quantity} units into the store display."
+    else:
+        product.stock_qty += payload.quantity
+        note = f"Inserted {payload.quantity} units into the selling pool."
+    reference = manual_reference("INSERT")
+    add_stock_movement(
+        db,
+        product=product,
+        movement_type="restock",
+        quantity_delta=payload.quantity,
+        unit_cost=product.cost_price,
+        reference=reference,
+        note=payload.note or note,
+        created_by=user,
+    )
+    add_activity(
+        db,
+        activity_type="insert_stock",
+        message=f"{product.name}: {note} ({reference}).",
+        actor=user,
+        entity_type="product",
+        entity_id=str(product.id),
+    )
+    await db.commit()
+    refreshed = await _get_product(db, product_id)
+    return ProductRead.model_validate(refreshed)
+
+
+@router.post("/{product_id}/clear-place", response_model=ProductRead)
+async def clear_place(
+    product_id: UUID,
+    payload: StockClearPlaceRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> ProductRead:
+    """Zero one stock place, moving its units to the other place."""
+    product = await _get_product(db, product_id)
+    if payload.place == "store":
+        moved = product.store_qty
+        product.store_qty = 0
+        note = f"Cleared the store display ({moved} units moved to the selling pool)."
+    else:
+        moved_to_store = product.stock_qty
+        product.store_qty = product.stock_qty
+        note = (
+            f"Cleared the selling pool "
+            f"({moved_to_store} units moved to the store display)."
+        )
+    reference = manual_reference("CLEAR")
+    add_stock_movement(
+        db,
+        product=product,
+        movement_type="transfer",
+        quantity_delta=0,
+        unit_cost=product.cost_price,
+        reference=reference,
+        note=payload.note or note,
+        created_by=user,
+    )
+    add_activity(
+        db,
+        activity_type="clear_place",
+        message=f"{product.name}: {note} ({reference}).",
         actor=user,
         entity_type="product",
         entity_id=str(product.id),

@@ -66,22 +66,36 @@ Response `204`.
   "cost_price": 2667,
   "selling_price": 3000,
   "stock_qty": 12,
+  "store_qty": 8,
+  "sell_qty": 4,
   "low_stock_threshold": 6,
   "location": "fridge",
   "slot_code": "F1-01",
   "is_active": true,
   "margin": 333,
   "stock_status": "in_stock",
+  "store_status": "in_stock",
   "created_at": "...",
   "updated_at": "..."
 }
 ```
 
-- `POST /products` — `{ code, name, category_id, package, cost_price, selling_price, stock_qty, low_stock_threshold, location, slot_code?, is_active? }`
-- `PATCH /products/{id}` — partial product fields; price/category edits allowed.
+`stock_qty` is the total on hand; `store_qty` is the subset on display for customer purchases; `sell_qty` is the remainder held for counter sales. `store_status` describes the display only.
+
+- `POST /products` — `{ code, name, category_id, package, cost_price, selling_price, stock_qty, store_qty, low_stock_threshold, location, slot_code?, is_active? }`
+- `PATCH /products/{id}` — partial product fields; price/category edits allowed. When both `stock_qty` and `store_qty` are supplied, `0 ≤ store_qty ≤ stock_qty` is enforced.
 - `POST /products/{id}/adjust-stock` — `{ type: "restock"|"adjustment"|"waste", quantity: 5, note? }`
   - `quantity` is a positive count; type determines sign.
+  - Restocks and adjustments add to the selling pool; waste clamps `store_qty` to the new total.
   - Returns the updated product.
+- `POST /products/{id}/transfer-stock` — admin only; `{ to: "store"|"sell", quantity: 5, note? }`
+  - Moves units between the store display and the selling pool, writes a `transfer` movement, and leaves `stock_qty` unchanged.
+  - `409` if the source place does not hold enough units. Returns the updated product.
+- `POST /products/{id}/insert-stock` — admin only; `{ place: "store"|"sell", quantity: 5, note? }`
+  - Adds units to one stock place: inserting into the store display increases `stock_qty` and `store_qty`; inserting into the selling pool increases `stock_qty` (raising `sell_qty = stock_qty - store_qty`).
+  - Writes a `restock` movement. Returns the updated product.
+- `POST /products/{id}/clear-place` — admin only; `{ place: "store"|"sell", note? }`
+  - Zeros one place: clearing the store display sets `store_qty = 0`; clearing the selling pool sets `store_qty = stock_qty`. Writes a `transfer` movement. Returns the updated product.
 
 ## Suppliers
 
@@ -126,7 +140,7 @@ Header: optional `Idempotency-Key`.
 }
 ```
 `payment_method` (admin-only field): `aba_khqr | alipay | card | pi_pay | acleda`. Default `aba_khqr`; older sales are backfilled as `aba_khqr`.
-Server computes unit prices and totals, locks products, rejects insufficient stock with `409`, decrements stock, writes `sale` movements, and returns the sale.
+Server computes unit prices and totals, locks products, rejects insufficient stock with `409`, decrements stock, writes `sale` movements, and returns the sale. Counter sales (`channel: "counter"`) draw from the selling pool first and dip into the store display only when needed; customer storefront sales (`channel: "store"`) take units from the store display only.
 
 `Sale`:
 ```json
@@ -138,6 +152,7 @@ Server computes unit prices and totals, locks products, rejects insufficient sto
   "discount": 0,
   "total": 6000,
   "status": "completed",
+  "channel": "counter",
   "sold_by_name": "Sarah Green",
   "notes": "",
   "created_at": "...",
@@ -149,7 +164,16 @@ Server computes unit prices and totals, locks products, rejects insufficient sto
 
 - `GET /sales?page=1&page_size=20&status=&from=&to=&q=`
 - `GET /sales/{id}`
-- `POST /sales/{id}/void` — admin only; restores stock and writes `void` movements. Response `Sale` with status `voided`.
+- `POST /sales/{id}/void` — admin only; restores stock and writes `void` movements. Units sold through the storefront return to the store display. Response `Sale` with status `voided`.
+
+## Charges
+
+- `POST /charges` — admin only; `{ product_id, quantity = 1, note? }`.
+  - Creates a pending charge using the product’s `selling_price * quantity` as the amount.
+  - Response `ChargeRead`: `{ id, reference, amount, quantity, product_code, product_name, note, status, qr, wallet_position, created_by_name, created_at }`.
+  - `qr` is the KHQR string for the exact charge amount (returns `409` if no KHQR account is configured).
+  - `wallet_position` is the shop ABA wallet position (`aba_balance`, `expected_balance`, `variance`).
+- `GET /charges?page=1&page_size=20` — staff/admins list charges (without `qr`).
 
 ## Stock
 
@@ -159,6 +183,8 @@ Server computes unit prices and totals, locks products, rejects insufficient sto
   "month": "2026-11",
   "product_count": 22,
   "total_units": 599,
+  "store_units": 410,
+  "sell_units": 189,
   "inventory_value": 1023300,
   "retail_value": 1335800,
   "units_sold": 702,
@@ -168,17 +194,17 @@ Server computes unit prices and totals, locks products, rejects insufficient sto
   "out_of_stock_count": 2,
   "category_mix": [{ "category": "Drink", "revenue": 500000, "units": 240, "percent": 37.4, "color": "#0FB5A0" }],
   "top_products": [{ "product_id": "uuid", "name": "Angkor Milk", "code": "MJK-1016", "units_sold": 319, "revenue": 542300, "profit": 208925 }],
-  "alerts": [{ "product_id": "uuid", "name": "Provida (Small)", "code": "DRK-1004", "stock_qty": 2, "threshold": 6, "status": "low_stock", "slot_code": "F2-03" }],
+  "alerts": [{ "product_id": "uuid", "name": "Provida (Small)", "code": "DRK-1004", "stock_qty": 2, "store_qty": 1, "sell_qty": 1, "threshold": 6, "status": "low_stock", "store_status": "low_stock", "slot_code": "F2-03" }],
   "items": [ProductStockRow]
 }
 ```
-`ProductStockRow` adds `units_sold`, `revenue`, `profit`, `retail_value`, `cost_value` to a product.
+`ProductStockRow` adds `units_sold`, `revenue`, `profit`, `retail_value`, `cost_value` to a product. `store_units` and `sell_units` split `total_units` across the two places.
 
-- `GET /stock/alerts` → low/out-of-stock products.
-- `GET /stock/movements?product_id=&type=&page=1&page_size=30`
+- `GET /stock/alerts` → low/out-of-stock products, with `store_qty`, `sell_qty`, and `store_status`.
+- `GET /stock/movements?product_id=&type=&page=1&page_size=30` — `type` may be `restock`, `sale`, `adjustment`, `waste`, `void`, or `transfer`.
 - `GET /stock/monthly?months=6` → `[{ month, units_sold, revenue, profit, closing_units }]`
 
-`StockMovement`: `{ id, product_id, product_code, product_name, type, quantity_delta, unit_cost, reference, note, created_by_name, created_at }`.
+`StockMovement`: `{ id, product_id, product_code, product_name, type, quantity_delta, unit_cost, reference, note, created_by_name, created_at }`. `transfer` movements have `quantity_delta: 0` and describe the move in `note`.
 
 ## Daily close
 
@@ -211,6 +237,19 @@ Upserts one close per date for admin/staff. Response `DailyClose`:
 `{ id, business_date, aba_sales, total_sales, gross_profit, expenses, aba_balance, variance, notes, closed_by_name, closed_at }`.
 
 - `GET /daily-closes?page=1&page_size=20&from=&to=`
+
+## Wallet position
+
+- `GET /wallet/position` → the shop's current ABA wallet position, readable by staff and admins.
+```json
+{
+  "aba_balance": 57500,
+  "expected_balance": 57000,
+  "variance": 500,
+  "as_of": "2026-11-06T18:30:00Z"
+}
+```
+`aba_balance` is the recorded wallet balance (today's close if it exists, otherwise the latest close). `expected_balance` is ABA sales today minus expenses paid out of the wallet. `variance` is `aba_balance − expected_balance` when the balance is known.
 
 ## Fund requests
 
@@ -282,8 +321,8 @@ Money already spent by the shop; deducted from ABA sales in the daily check. Cat
 
 ## Storefront (customers)
 
-- `GET /store/products?q=` → `{ items, total }` — the buyable menu: active products with price and availability. No cost prices or margins.
-- `POST /store/checkout` — header: optional `Idempotency-Key`. Body `{ items: [{ product_id, quantity }], payment_method, notes? }`. Creates a sale through the same engine as the POS (stock check `409`, decrements, movements). No discount — that is a staff decision.
+- `GET /store/products?q=` → `{ items, total }` — the buyable menu: active products with price and availability. `stock_qty`/`stock_status` reflect the store display only; units held for counter sales are hidden. No cost prices or margins.
+- `POST /store/checkout` — header: optional `Idempotency-Key`. Body `{ items: [{ product_id, quantity }], payment_method, notes? }`. Creates a `channel: "store"` sale through the same engine as the POS; availability and decrements are limited to `store_qty` (stock check `409`, movements). No discount — that is a staff decision.
 - `GET /store/orders` — the signed-in customer's own purchase history.
 - Returns the same `Sale` shape as `POST /sales`; for customer checkouts `sold_by_name` is the buyer.
 

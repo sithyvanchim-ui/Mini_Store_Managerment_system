@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StockAlerts } from "@/components/stock/stock-alerts";
+import { StockInsertList } from "@/components/stock/stock-insert-list";
 import { StockProductTable } from "@/components/stock/stock-product-table";
 import { StockMovements } from "@/components/stock/stock-movements";
 import { StockMonthly } from "@/components/stock/stock-monthly";
@@ -114,7 +115,7 @@ export default function StockPage() {
               value={formatNumber(summary.total_units)}
               icon={<Boxes />}
               tone="brand"
-              hint={`${formatNumber(summary.product_count)} products tracked`}
+              hint={`${formatNumber(summary.store_units)} in store · ${formatNumber(summary.sell_units)} for selling`}
             />
             <StatCard
               label="Products tracked"
@@ -187,6 +188,14 @@ export default function StockPage() {
             <div className="overflow-x-auto">
               <StockProductTable items={summary.items} />
             </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Insert stock positions"
+            description="Add units to the store display or the selling pool, with the current store/sell values shown per product."
+            bodyClassName="p-4"
+          >
+            <StockInsertList />
           </SectionCard>
 
           <StockMovements products={summary.items} />

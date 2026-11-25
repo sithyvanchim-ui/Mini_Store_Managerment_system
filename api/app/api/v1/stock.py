@@ -70,8 +70,11 @@ def _alerts_for(products: list[Product]) -> list[LowStockItem]:
             name=product.name,
             code=product.code,
             stock_qty=product.stock_qty,
+            store_qty=product.store_qty,
+            sell_qty=product.sell_qty,
             threshold=product.low_stock_threshold,
             status=product.stock_status,
+            store_status=product.store_status,
             slot_code=product.slot_code,
             category=product.category.name if product.category else "Uncategorised",
         )
@@ -181,12 +184,15 @@ async def stock_summary(
                 cost_price=product.cost_price,
                 selling_price=product.selling_price,
                 stock_qty=product.stock_qty,
+                store_qty=product.store_qty,
+                sell_qty=product.sell_qty,
                 low_stock_threshold=product.low_stock_threshold,
                 location=product.location,
                 slot_code=product.slot_code,
                 is_active=product.is_active,
                 margin=product.margin,
                 stock_status=product.stock_status,
+                store_status=product.store_status,
                 created_at=product.created_at,
                 updated_at=product.updated_at,
                 units_sold=sold_units,
@@ -198,6 +204,8 @@ async def stock_summary(
         )
 
     total_units = sum(product.stock_qty for product in products)
+    store_units = sum(product.store_qty for product in products)
+    sell_units = total_units - store_units
     inventory_value = sum(product.stock_qty * product.cost_price for product in products)
     retail_value = sum(
         product.stock_qty * product.selling_price for product in products
@@ -220,6 +228,8 @@ async def stock_summary(
         month=month_value,
         product_count=len(products),
         total_units=total_units,
+        store_units=store_units,
+        sell_units=sell_units,
         inventory_value=inventory_value,
         retail_value=retail_value,
         units_sold=units_sold,
@@ -265,7 +275,14 @@ async def stock_movements(
     if product_id:
         conditions.append(StockMovement.product_id == product_id)
     if movement_type:
-        if movement_type not in {"restock", "sale", "adjustment", "waste", "void"}:
+        if movement_type not in {
+            "restock",
+            "sale",
+            "adjustment",
+            "waste",
+            "void",
+            "transfer",
+        }:
             raise ApiError(400, "Invalid movement type.", "invalid_type")
         conditions.append(StockMovement.type == movement_type)
     start, end = parse_range(from_value, to_value)

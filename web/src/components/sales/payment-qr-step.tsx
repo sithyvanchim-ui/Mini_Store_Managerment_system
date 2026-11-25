@@ -1,14 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
-import {
-  Banknote,
-  Landmark,
-  Loader2,
-  QrCode,
-  Smartphone,
-  Wallet,
-} from "lucide-react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Landmark, Loader2, QrCode } from "lucide-react";
 import { KhqrImage } from "@/components/sales/khqr-image";
 import {
   DialogDescription,
@@ -17,6 +10,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
+import {
+  BANK_APP_NAMES,
+  buildBankAppLink,
+  isMobileBrowser,
+} from "@/lib/bank-app";
 import { formatKHR } from "@/lib/utils";
 import { usePaymentKhqr } from "@/hooks/use-sales";
 import type { PaymentMethod } from "@/types/api";
@@ -29,7 +27,7 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   acleda: "ACLEDA",
 };
 
-/** The checkout channels, in the order the ABA app shows them. */
+/** The bank apps a buyer can pay from. Checkout opens the chosen one. */
 export const PAYMENT_METHODS: Array<{
   value: PaymentMethod;
   label: string;
@@ -39,31 +37,13 @@ export const PAYMENT_METHODS: Array<{
   {
     value: "aba_khqr",
     label: "ABA KHQR",
-    hint: "Scan with ABA Mobile",
+    hint: "Opens ABA Mobile to pay",
     icon: <QrCode />,
-  },
-  {
-    value: "alipay",
-    label: "Alipay",
-    hint: "Alipay wallet only",
-    icon: <Smartphone />,
-  },
-  {
-    value: "card",
-    label: "Credit / Debit Card",
-    hint: "Visa, Mastercard, UnionPay, and JCB",
-    icon: <Banknote />,
-  },
-  {
-    value: "pi_pay",
-    label: "Pi Pay",
-    hint: "Pi Pay Wallet",
-    icon: <Wallet />,
   },
   {
     value: "acleda",
     label: "ACLEDA",
-    hint: "Pay via ACLEDA mobile",
+    hint: "Opens ACLEDA Mobile to pay",
     icon: <Landmark />,
   },
 ];
@@ -71,11 +51,12 @@ export const PAYMENT_METHODS: Array<{
 /** Scan instruction shown under the QR, per chosen method. */
 const QR_HINTS: Record<PaymentMethod, string> = {
   aba_khqr:
-    "Scan with any bank app — KHQR works with ABA, ACLEDA, and every KHQR bank.",
+    "ABA Mobile opens automatically on your phone. If it did not, scan this QR or tap Open ABA app.",
   alipay: "Open Alipay and scan this QR to pay.",
   card: "The buyer scans this QR with their bank app to pay the exact amount.",
   pi_pay: "Open Pi Pay and scan this QR to pay.",
-  acleda: "Open ACLEDA mobile and scan this QR to pay.",
+  acleda:
+    "ACLEDA Mobile opens automatically on your phone. If it did not, scan this QR or tap Open ACLEDA app.",
 };
 
 /**
@@ -105,6 +86,21 @@ export function PaymentQrStep({
   const notConfigured =
     khqrQuery.error instanceof ApiError && khqrQuery.error.status === 409;
 
+  const bankLink = qr ? buildBankAppLink(payMethod, qr) : null;
+  const bankName = BANK_APP_NAMES[payMethod];
+  const launchedQr = useRef<string | null>(null);
+
+  // Jump straight into the buyer's bank app as soon as the amount-locked
+  // QR is ready. Phones can hand off to the app; desktop browsers cannot, so
+  // they keep the QR and the manual button instead (auto window.open during
+  // commit also trips React's scheduler).
+  useEffect(() => {
+    if (!bankLink || !qr || launchedQr.current === qr) return;
+    launchedQr.current = qr;
+    if (!isMobileBrowser()) return;
+    window.location.href = bankLink;
+  }, [bankLink, qr]);
+
   return (
     <>
       <DialogHeader>
@@ -112,8 +108,8 @@ export function PaymentQrStep({
           {PAYMENT_LABELS[payMethod]} · {formatKHR(total)}
         </DialogTitle>
         <DialogDescription>
-          The buyer scans this QR to pay the exact amount — it is locked to{" "}
-          {formatKHR(total)}.
+          The buyer&apos;s {bankName ?? "bank"} app opens with this exact amount
+          already filled in — it is locked to {formatKHR(total)}.
         </DialogDescription>
       </DialogHeader>
 
@@ -146,7 +142,18 @@ export function PaymentQrStep({
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        {bankLink && bankName ? (
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full text-xs font-bold"
+          >
+            <a href={bankLink} target="_blank" rel="noopener noreferrer">
+              Open {bankName} app
+            </a>
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="outline"

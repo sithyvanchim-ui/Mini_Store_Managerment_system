@@ -59,6 +59,10 @@ export function StockAlerts({ alerts }: StockAlertsProps) {
             </TableCell>
             <TableCell className="text-right text-xs font-bold tabular-nums text-ink">
               {formatNumber(alert.stock_qty)}
+              <span className="block text-[10px] font-medium text-muted-foreground">
+                {formatNumber(alert.store_qty)} store ·{" "}
+                {formatNumber(alert.sell_qty)} sell
+              </span>
             </TableCell>
             <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
               {formatNumber(alert.threshold)}

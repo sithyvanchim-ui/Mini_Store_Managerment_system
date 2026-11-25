@@ -37,7 +37,15 @@ async def create_sale(
     payload: SaleCreate,
     user: User,
     idempotency_key: str | None,
+    channel: str = "counter",
 ) -> Sale:
+    """Create a sale.
+
+    ``channel="counter"`` is a staff POS sale: it may take any unit on hand,
+    using the selling pool first and dipping into the store display only when
+    needed. ``channel="store"`` is a customer self-checkout: it may only take
+    units actually placed in the store.
+    """
     if idempotency_key:
         existing = await db.scalar(
             select(Sale)
@@ -69,11 +77,13 @@ async def create_sale(
                 "inactive_product",
             )
         requested = quantities[product_id]
-        if requested > product.stock_qty:
+        available = product.store_qty if channel == "store" else product.stock_qty
+        if requested > available:
+            where = " in the store" if channel == "store" else ""
             raise ApiError(
                 409,
-                f"Not enough stock for {product.name}. "
-                f"Available: {product.stock_qty}, requested: {requested}.",
+                f"Not enough stock{where} for {product.name}. "
+                f"Available: {available}, requested: {requested}.",
                 "insufficient_stock",
             )
 
@@ -99,6 +109,7 @@ async def create_sale(
         discount=payload.discount,
         total=total,
         status="completed",
+        channel=channel,
         idempotency_key=idempotency_key[:120] if idempotency_key else None,
         sold_by_id=user.id,
         notes=payload.notes,
@@ -121,7 +132,16 @@ async def create_sale(
                 line_profit=line_profit,
             )
         )
+        if channel == "store":
+            product.store_qty -= quantity
+        else:
+            # Staff sell from the selling pool first; take from the store
+            # display only when the pool cannot cover the sale.
+            sell_pool = product.stock_qty - product.store_qty
+            if quantity > sell_pool:
+                product.store_qty -= quantity - sell_pool
         product.stock_qty -= quantity
+        place = "store" if channel == "store" else "counter"
         add_stock_movement(
             db,
             product=product,
@@ -129,7 +149,7 @@ async def create_sale(
             quantity_delta=-quantity,
             unit_cost=product.cost_price,
             reference=reference,
-            note=f"Sale {reference}",
+            note=f"Sale {reference} ({place})",
             created_by=user,
             created_at=now,
         )
@@ -165,6 +185,12 @@ async def void_sale(db: AsyncSession, *, sale_id: UUID, user: User) -> Sale:
         if product is None:
             continue
         product.stock_qty += item.quantity
+        if sale.channel == "store":
+            # A customer order came out of the store display — put it back.
+            product.store_qty = min(
+                product.stock_qty,
+                product.store_qty + item.quantity,
+            )
         add_stock_movement(
             db,
             product=product,

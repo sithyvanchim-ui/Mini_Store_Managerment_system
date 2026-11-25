@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Runtime configuration for the MiniStore API."""
+    """Runtime configuration for the MiniStoreCR API."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "MiniStore API"
+    app_name: str = "MiniStoreCR API"
     environment: str = "development"
     api_v1_prefix: str = "/api/v1"
 

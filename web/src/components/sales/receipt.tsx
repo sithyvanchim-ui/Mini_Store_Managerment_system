@@ -24,7 +24,7 @@ interface ReceiptProps {
 
 export function Receipt({
   sale,
-  storeName = "MiniStore",
+  storeName = "MiniStoreCR",
   dormName,
   footer = "Thank you!",
 }: ReceiptProps) {

@@ -57,8 +57,12 @@ const productSchema = z.object({
     .number({ error: "Enter the selling price" })
     .int("Price must be a whole number of riel")
     .min(0, "Price cannot be negative"),
-  stock_qty: z
-    .number({ error: "Enter the opening stock" })
+  store_qty: z
+    .number({ error: "Enter the store quantity" })
+    .int("Stock must be a whole number")
+    .min(0, "Stock cannot be negative"),
+  sell_qty: z
+    .number({ error: "Enter the selling quantity" })
     .int("Stock must be a whole number")
     .min(0, "Stock cannot be negative"),
   low_stock_threshold: z
@@ -79,7 +83,8 @@ const emptyValues: ProductFormValues = {
   package: "",
   cost_price: 0,
   selling_price: 0,
-  stock_qty: 0,
+  store_qty: 0,
+  sell_qty: 0,
   low_stock_threshold: 5,
   location: "fridge",
   slot_code: "",
@@ -118,6 +123,7 @@ export function ProductFormDialog({
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -135,7 +141,8 @@ export function ProductFormDialog({
             package: product.package,
             cost_price: product.cost_price,
             selling_price: product.selling_price,
-            stock_qty: product.stock_qty,
+            store_qty: product.store_qty,
+            sell_qty: product.sell_qty,
             low_stock_threshold: product.low_stock_threshold,
             location: product.location,
             slot_code: product.slot_code ?? "",
@@ -168,7 +175,8 @@ export function ProductFormDialog({
       } else {
         await createProduct.mutateAsync({
           ...payload,
-          stock_qty: values.stock_qty,
+          stock_qty: values.store_qty + values.sell_qty,
+          store_qty: values.store_qty,
         });
         toast.success("Product added", {
           description: `${payload.name} is now in the catalogue.`,
@@ -301,37 +309,67 @@ export function ProductFormDialog({
             </div>
 
             <div>
-              <Label htmlFor="product-stock">
-                {isEditing ? "Current stock" : "Opening stock"}
+              <Label htmlFor="product-store-stock">
+                {isEditing ? "In the store" : "Opening stock · store"}
               </Label>
               {isEditing ? (
-                <>
-                  <Input
-                    id="product-stock"
-                    className="mt-1.5 h-10 rounded-xl bg-muted/50"
-                    value={product?.stock_qty ?? 0}
-                    disabled
-                    readOnly
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Stock is read-only here. Use Adjust stock to record a change.
-                  </p>
-                </>
+                <Input
+                  id="product-store-stock"
+                  className="mt-1.5 h-10 rounded-xl bg-muted/50"
+                  value={product?.store_qty ?? 0}
+                  disabled
+                  readOnly
+                />
               ) : (
                 <>
                   <Input
-                    id="product-stock"
+                    id="product-store-stock"
                     type="number"
                     inputMode="numeric"
                     step={1}
                     min={0}
                     className="mt-1.5 h-10 rounded-xl"
-                    aria-invalid={Boolean(errors.stock_qty)}
-                    {...register("stock_qty", { valueAsNumber: true })}
+                    aria-invalid={Boolean(errors.store_qty)}
+                    {...register("store_qty", { valueAsNumber: true })}
                   />
-                  <FieldError message={errors.stock_qty?.message} />
+                  <FieldError message={errors.store_qty?.message} />
                 </>
               )}
+            </div>
+            <div>
+              <Label htmlFor="product-sell-stock">
+                {isEditing ? "Held for selling" : "Opening stock · sell"}
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="product-sell-stock"
+                  className="mt-1.5 h-10 rounded-xl bg-muted/50"
+                  value={product?.sell_qty ?? 0}
+                  disabled
+                  readOnly
+                />
+              ) : (
+                <>
+                  <Input
+                    id="product-sell-stock"
+                    type="number"
+                    inputMode="numeric"
+                    step={1}
+                    min={0}
+                    className="mt-1.5 h-10 rounded-xl"
+                    aria-invalid={Boolean(errors.sell_qty)}
+                    {...register("sell_qty", { valueAsNumber: true })}
+                  />
+                  <FieldError message={errors.sell_qty?.message} />
+                </>
+              )}
+            </div>
+            <div className="sm:col-span-2">
+              <p className="rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                {isEditing
+                  ? "Stock is split between the store display and the selling pool. Use Move stock to change the split, or Adjust stock for a quantity change."
+                  : `Total opening stock: ${(watch("store_qty") || 0) + (watch("sell_qty") || 0)} units — ${watch("store_qty") || 0} in the store, ${watch("sell_qty") || 0} held for selling.`}
+              </p>
             </div>
             <div>
               <Label htmlFor="product-threshold">Low stock threshold</Label>

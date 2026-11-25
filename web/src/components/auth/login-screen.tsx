@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
   ArrowRight,
+  BadgeCheck,
   Eye,
   EyeOff,
   KeyRound,
@@ -16,6 +17,7 @@ import {
   Lock,
   Mail,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -42,12 +44,21 @@ const demoAccounts = [
     email: "admin@ministore.local",
     password: "Admin123!",
     hint: "Full access · settings, team, voids",
+    icon: ShieldCheck,
   },
   {
     label: "Staff demo",
     email: "staff@ministore.local",
     password: "Staff123!",
     hint: "POS, restock, and daily close",
+    icon: BadgeCheck,
+  },
+  {
+    label: "Customer demo",
+    email: "customer@ministore.local",
+    password: "Customer123!",
+    hint: "Customer dashboard · view products and buy",
+    icon: ShoppingBag,
   },
 ];
 
@@ -87,7 +98,9 @@ export function LoginScreen() {
       toast.success("Signed in", {
         description: `Welcome back, ${data.user.name}.`,
       });
-      router.replace(destination);
+      // Customers belong to their own dashboard; staff and admins go to the
+      // requested dashboard page.
+      router.replace(data.user.role === "customer" ? "/store" : destination);
     },
     onError: (error) => {
       setFormError(
@@ -99,8 +112,9 @@ export function LoginScreen() {
   });
 
   useEffect(() => {
-    if (me.data?.user && !loggedIn.current) {
-      router.replace("/");
+    const user = me.data?.user;
+    if (user && !loggedIn.current) {
+      router.replace(user.role === "customer" ? "/store" : "/");
     }
   }, [me.data, router]);
 
@@ -140,11 +154,12 @@ export function LoginScreen() {
                   Welcome back
                 </span>
                 <h1 className="mt-3 font-heading text-[28px] font-extrabold tracking-tight text-ink">
-                  Sign in to MiniStore
+                  Sign in to MiniStoreCR
                 </h1>
                 <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                  Use your store account to open the counter, restock, and close
-                  the day.
+                  Staff and admins open the counter, restock, and close the day.
+                  Customers go straight to their own dashboard to view products
+                  and buy.
                 </p>
               </div>
 
@@ -273,9 +288,9 @@ export function LoginScreen() {
                     className="group flex items-center gap-3 rounded-2xl border border-border/80 bg-background/50 px-3 py-2.5 text-left transition-colors hover:border-brand/30 hover:bg-mint/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                     aria-label={`Fill the form with the ${account.label} credentials`}
                   >
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-mint text-brand-strong [&_svg]:size-4">
-                      <ShieldCheck />
-                    </span>
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-mint text-brand-strong [&_svg]:size-4">
+                        <account.icon />
+                      </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
                         <span className="text-[11px] font-bold text-ink">

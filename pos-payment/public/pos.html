@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart-style POS</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; display: flex; min-height: 100vh; }
+    .products { flex: 1; padding: 20px; }
+    .cart { width: 350px; border-left: 1px solid #ddd; padding: 20px; }
+    button { padding: 12px; margin: 5px; font-size: 16px; }
+    .item { display: flex; justify-content: space-between; margin: 8px 0; }
+    pre { white-space: pre-wrap; background: #f5f5f5; padding: 10px; }
+  </style>
+</head>
+<body>
+  <div class="products">
+    <h1>Products</h1>
+    <div id="product-list"></div>
+  </div>
+
+  <div class="cart">
+    <h2>Cart</h2>
+    <div id="cart-items"></div>
+    <h3>Total: $<span id="total">0.00</span></h3>
+    <label for="bank-select">Pay with</label>
+    <select id="bank-select">
+      <option value="aba">ABA</option>
+      <option value="acleda">ACLEDA</option>
+    </select>
+    <button onclick="checkout()">Checkout</button>
+    <pre id="result"></pre>
+  </div>
+
+  <script>
+    const cart = new Map();
+
+    async function loadProducts() {
+      const response = await fetch("/api/products");
+      const data = await response.json();
+
+      document.getElementById("product-list").innerHTML = data.products
+        .map(product => `
+          <button onclick="addToCart(${product.id}, '${product.name}', ${product.price_cents})">
+            ${product.name} - $${(product.price_cents / 100).toFixed(2)}
+          </button>
+        `)
+        .join("");
+    }
+
+    function addToCart(id, name, priceCents) {
+      const current = cart.get(id) || { name, priceCents, quantity: 0 };
+      current.quantity++;
+      cart.set(id, current);
+      renderCart();
+    }
+
+    function renderCart() {
+      let total = 0;
+      let html = "";
+
+      for (const item of cart.values()) {
+        const lineTotal = item.priceCents * item.quantity;
+        total += lineTotal;
+
+        html += `
+          <div class="item">
+            <span>${item.name} x ${item.quantity}</span>
+            <span>$${(lineTotal / 100).toFixed(2)}</span>
+          </div>
+        `;
+      }
+
+      document.getElementById("cart-items").innerHTML = html;
+      document.getElementById("total").textContent = (total / 100).toFixed(2);
+    }
+
+    function openBankApp(link) {
+      if (!link) return;
+
+      // On a phone, jump straight into the bank app. On desktop, open it in a
+      // new tab so this POS screen keeps the order and status visible.
+      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = link;
+        return;
+      }
+
+      window.open(link, "_blank");
+    }
+
+    async function checkout() {
+      if (cart.size === 0) {
+        alert("Add products first");
+        return;
+      }
+
+      const provider = document.getElementById("bank-select").value;
+      const items = [...cart.entries()].map(([productId, item]) => ({
+        productId,
+        quantity: item.quantity
+      }));
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ items, provider })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        document.getElementById("result").textContent =
+          data.error || "Could not create the order";
+        return;
+      }
+
+      document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+
+      // The payment deep link opens the chosen bank app with the exact amount.
+      if (data.payment?.appLink) {
+        openBankApp(data.payment.appLink);
+      }
+
+      if (data.orderReference) {
+        pollStatus(data.orderReference);
+      }
+    }
+
+    async function pollStatus(reference) {
+      const response = await fetch(`/api/orders/${reference}`);
+      const data = await response.json();
+
+      if (data.order.status === "PAID") {
+        document.getElementById("result").textContent +=
+          "\n\nPAYMENT SUCCESSFUL";
+        cart.clear();
+        renderCart();
+        return;
+      }
+
+      if (data.order.status === "FAILED") {
+        document.getElementById("result").textContent +=
+          "\n\nPAYMENT FAILED";
+        return;
+      }
+
+      setTimeout(() => pollStatus(reference), 2000);
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

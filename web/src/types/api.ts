@@ -9,7 +9,8 @@ export type StockMovementType =
   | "sale"
   | "adjustment"
   | "waste"
-  | "void";
+  | "void"
+  | "transfer";
 
 export type SaleStatus = "completed" | "voided";
 
@@ -52,12 +53,17 @@ export interface Product {
   cost_price: number;
   selling_price: number;
   stock_qty: number;
+  /** Units placed in the customer-facing store. */
+  store_qty: number;
+  /** Units held for counter sales (`stock_qty - store_qty`). */
+  sell_qty: number;
   low_stock_threshold: number;
   location: ProductLocation;
   slot_code: string | null;
   is_active: boolean;
   margin: number;
   stock_status: StockStatus;
+  store_status: StockStatus;
   created_at: string;
   updated_at: string;
 }
@@ -117,6 +123,7 @@ export interface Sale {
   discount: number;
   total: number;
   status: SaleStatus;
+  channel: "counter" | "store";
   sold_by_name: string;
   notes: string | null;
   created_at: string;
@@ -142,8 +149,11 @@ export interface LowStockItem {
   name: string;
   code: string;
   stock_qty: number;
+  store_qty: number;
+  sell_qty: number;
   threshold: number;
   status: StockStatus;
+  store_status: StockStatus;
   slot_code: string | null;
   category: string;
 }
@@ -177,6 +187,8 @@ export interface StockSummary {
   month: string;
   product_count: number;
   total_units: number;
+  store_units: number;
+  sell_units: number;
   inventory_value: number;
   retail_value: number;
   units_sold: number;
@@ -378,10 +390,28 @@ export interface ProductPayload {
   cost_price: number;
   selling_price: number;
   stock_qty: number;
+  store_qty: number;
   low_stock_threshold: number;
   location: ProductLocation;
   slot_code?: string | null;
   is_active?: boolean;
+}
+
+export interface TransferStockPayload {
+  to: "store" | "sell";
+  quantity: number;
+  note?: string;
+}
+
+export interface InsertStockPayload {
+  place: "store" | "sell";
+  quantity: number;
+  note?: string;
+}
+
+export interface ClearPlacePayload {
+  place: "store" | "sell";
+  note?: string;
 }
 
 export interface DailyClosePayload {

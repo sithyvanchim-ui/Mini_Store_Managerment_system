@@ -18,6 +18,10 @@ export const demoAccounts = {
     email: process.env.E2E_STAFF_EMAIL ?? "staff@ministore.local",
     password: process.env.E2E_STAFF_PASSWORD ?? "Staff123!",
   },
+  customer: {
+    email: process.env.E2E_CUSTOMER_EMAIL ?? "customer@ministore.local",
+    password: process.env.E2E_CUSTOMER_PASSWORD ?? "Customer123!",
+  },
 } as const;
 
 export type DemoAccount = { email: string; password: string };

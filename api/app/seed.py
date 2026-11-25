@@ -153,7 +153,7 @@ async def _ensure_reference_data(db: AsyncSession) -> tuple[dict[str, User], dic
     if await db.scalar(select(func.count(AppSettings.id))) == 0:
         db.add(
             AppSettings(
-                store_name="MiniStore",
+                store_name="MiniStoreCR",
                 dorm_name="Block C Dorm",
                 currency="KHR",
                 low_stock_default=6,
@@ -217,6 +217,9 @@ async def _ensure_reference_data(db: AsyncSession) -> tuple[dict[str, User], dic
                     cost_price=cost,
                     selling_price=selling,
                     stock_qty=stock,
+                    # Put most of the opening stock on display in the store;
+                    # the rest is held for counter sales.
+                    store_qty=max(1, stock // 2) if stock else 0,
                     low_stock_threshold=6,
                     location=location,
                     slot_code=slot,

@@ -38,6 +38,7 @@ const MOVEMENT_TYPES: Array<{ value: StockMovementType; label: string }> = [
   { value: "adjustment", label: "Adjustment" },
   { value: "waste", label: "Waste" },
   { value: "void", label: "Void" },
+  { value: "transfer", label: "Transfer" },
 ];
 
 const MOVEMENT_META: Record<
@@ -52,6 +53,7 @@ const MOVEMENT_META: Record<
   adjustment: { label: "Adjustment", tone: "neutral" },
   waste: { label: "Waste", tone: "warning" },
   void: { label: "Void", tone: "danger" },
+  transfer: { label: "Transfer", tone: "brand" },
 };
 
 interface StockMovementsProps {
@@ -162,7 +164,7 @@ export function StockMovements({ products }: StockMovementsProps) {
             <EmptyState
               icon={<History />}
               title="No movements found"
-              description="Restocks, sales, adjustments, waste, and voids will be listed here."
+              description="Restocks, sales, adjustments, waste, transfers, and voids will be listed here."
             />
           </div>
         ) : (

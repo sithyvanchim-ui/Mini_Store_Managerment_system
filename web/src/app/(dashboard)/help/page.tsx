@@ -49,7 +49,7 @@ export default function HelpPage() {
       <PageHeader
         eyebrow="Support"
         title="Help"
-        description="The five-minute tour of MiniStore — what each area does and where daily work happens."
+        description="The five-minute tour of MiniStoreCR — what each area does and where daily work happens."
       />
 
       <div className="grid gap-4 sm:grid-cols-2">

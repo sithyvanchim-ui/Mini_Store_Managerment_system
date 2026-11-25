@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Boxes } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Boxes, Eraser, Plus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,7 +13,9 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProductThumb } from "@/components/shared/product-thumb";
 import { StockStatusBadge } from "@/components/shared/status-badge";
+import { useClearPlace, useInsertStock } from "@/hooks/use-products";
 import { cn, formatNumber } from "@/lib/utils";
+import { toast } from "sonner";
 import type { ProductStockRow } from "@/types/api";
 
 type SortKey =
@@ -75,6 +77,9 @@ function SortHeader({
 export function StockProductTable({ items }: StockProductTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("stock_qty");
   const [direction, setDirection] = useState<SortDirection>("desc");
+  const [busy, setBusy] = useState<string | null>(null);
+  const insertStock = useInsertStock();
+  const clearPlace = useClearPlace();
 
   const sorted = useMemo(() => {
     const copy = [...items];
@@ -97,6 +102,38 @@ export function StockProductTable({ items }: StockProductTableProps) {
     }
     setSortKey(key);
     setDirection(key === "name" ? "asc" : "desc");
+  }
+
+  async function runPlaceAction(
+    item: ProductStockRow,
+    action: "insert-store" | "insert-sell" | "clear-store" | "clear-sell",
+  ) {
+    const key = `${item.id}:${action}`;
+    setBusy(key);
+    try {
+      if (action === "insert-store") {
+        await insertStock.mutateAsync({
+          id: item.id,
+          payload: { place: "store", quantity: 1 },
+        });
+      } else if (action === "insert-sell") {
+        await insertStock.mutateAsync({
+          id: item.id,
+          payload: { place: "sell", quantity: 1 },
+        });
+      } else if (action === "clear-store") {
+        await clearPlace.mutateAsync({ id: item.id, payload: { place: "store" } });
+      } else {
+        await clearPlace.mutateAsync({ id: item.id, payload: { place: "sell" } });
+      }
+      toast.success("Stock updated");
+    } catch (error) {
+      toast.error("Stock update failed", {
+        description: error instanceof Error ? error.message : "Try again.",
+      });
+    } finally {
+      setBusy(null);
+    }
   }
 
   if (items.length === 0) {
@@ -168,6 +205,48 @@ export function StockProductTable({ items }: StockProductTableProps) {
                     {item.code}
                     {item.slot_code ? ` · ${item.slot_code}` : ""}
                   </p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <button
+                      type="button"
+                      title="Insert into the store display"
+                      aria-label={`Insert ${item.name} into the store`}
+                      disabled={busy !== null}
+                      onClick={() => runPlaceAction(item, "insert-store")}
+                      className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-2 py-0.5 text-[10px] font-bold text-ink hover:bg-mint/40 disabled:opacity-50"
+                    >
+                      <Plus className="size-3" /> Ins store
+                    </button>
+                    <button
+                      type="button"
+                      title="Insert into the selling pool"
+                      aria-label={`Insert ${item.name} into the selling pool`}
+                      disabled={busy !== null}
+                      onClick={() => runPlaceAction(item, "insert-sell")}
+                      className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-2 py-0.5 text-[10px] font-bold text-ink hover:bg-mint/40 disabled:opacity-50"
+                    >
+                      <Plus className="size-3" /> Ins sell
+                    </button>
+                    <button
+                      type="button"
+                      title="Clear the store display"
+                      aria-label={`Clear the store display of ${item.name}`}
+                      disabled={busy !== null}
+                      onClick={() => runPlaceAction(item, "clear-store")}
+                      className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-2 py-0.5 text-[10px] font-bold text-destructive hover:bg-mint/40 disabled:opacity-50"
+                    >
+                      <Eraser className="size-3" /> Clear store
+                    </button>
+                    <button
+                      type="button"
+                      title="Clear the selling pool"
+                      aria-label={`Clear the selling pool of ${item.name}`}
+                      disabled={busy !== null}
+                      onClick={() => runPlaceAction(item, "clear-sell")}
+                      className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card px-2 py-0.5 text-[10px] font-bold text-destructive hover:bg-mint/40 disabled:opacity-50"
+                    >
+                      <Eraser className="size-3" /> Clear sell
+                    </button>
+                  </div>
                 </div>
               </div>
             </TableCell>
@@ -176,6 +255,10 @@ export function StockProductTable({ items }: StockProductTableProps) {
             </TableCell>
             <TableCell className="text-right text-xs font-bold tabular-nums text-ink">
               {formatNumber(item.stock_qty)}
+              <span className="block text-[10px] font-medium text-muted-foreground">
+                {formatNumber(item.store_qty)} store ·{" "}
+                {formatNumber(item.sell_qty)} sell
+              </span>
             </TableCell>
             <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
               {formatNumber(item.low_stock_threshold)}

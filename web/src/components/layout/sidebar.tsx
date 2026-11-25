@@ -181,7 +181,7 @@ export function SidebarContent({ onNavigate, className }: SidebarContentProps) {
       </div>
 
       <p className="px-3 pb-1 pt-3 text-[9px] font-medium text-muted-foreground/60">
-        MiniStore v1.0 · KHR
+        MiniStoreCR v1.0 · KHR
       </p>
     </div>
   );

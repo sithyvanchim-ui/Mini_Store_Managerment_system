@@ -172,6 +172,7 @@ async def product(seed: Seed) -> Product:
             cost_price=2000,
             selling_price=3000,
             stock_qty=12,
+            store_qty=8,
             low_stock_threshold=4,
             location="fridge",
             slot_code="A1",

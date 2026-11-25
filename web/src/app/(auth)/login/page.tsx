@@ -8,7 +8,7 @@ import {
 export const metadata: Metadata = {
   title: "Sign in",
   description:
-    "Sign in to MiniStore to manage dorm fridge stock, sales, restocking, and the daily ABA close.",
+    "Sign in to MiniStoreCR to manage dorm fridge stock, sales, restocking, and the daily ABA close.",
 };
 
 export default function LoginPage() {

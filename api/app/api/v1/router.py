@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     auth,
     categories,
+    charges,
     daily_closes,
     dashboard,
     expenses,
@@ -19,6 +20,7 @@ from app.api.v1 import (
     store,
     suppliers,
     users,
+    wallets,
 )
 
 api_router = APIRouter()
@@ -32,7 +34,9 @@ for module in (
     purchases,
     sales,
     stock,
+    charges,
     daily_closes,
+    wallets,
     dashboard,
     reports,
     settings,

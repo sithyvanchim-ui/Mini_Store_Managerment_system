@@ -59,7 +59,7 @@ export function AuthBrandPanel({ className }: { className?: string }) {
         </span>
         <span>
           <span className="block font-heading text-lg font-extrabold leading-tight tracking-tight">
-            MiniStore
+            MiniStoreCR
           </span>
           <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-white/65">
             Dorm operations
@@ -184,7 +184,7 @@ export function AuthMobileHeader() {
         </span>
         <span>
           <span className="block font-heading text-base font-extrabold leading-tight tracking-tight text-ink">
-            MiniStore
+            MiniStoreCR
           </span>
           <span className="block text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
             Dorm operations

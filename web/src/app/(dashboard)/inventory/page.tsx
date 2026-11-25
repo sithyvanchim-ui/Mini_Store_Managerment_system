@@ -43,6 +43,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ProductsTable } from "@/components/inventory/products-table";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { AdjustStockDialog } from "@/components/inventory/adjust-stock-dialog";
+import { TransferStockDialog } from "@/components/inventory/transfer-stock-dialog";
 import { FridgeMap } from "@/components/inventory/fridge-map";
 import {
   PRODUCTS_PAGE_SIZE,
@@ -70,6 +71,7 @@ export default function InventoryPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
+  const [transferProduct, setTransferProduct] = useState<Product | null>(null);
   const [deactivateProduct, setDeactivateProduct] = useState<Product | null>(
     null,
   );
@@ -438,6 +440,7 @@ export default function InventoryPage() {
                   products={productsQuery.data.items}
                   onEdit={openEdit}
                   onAdjust={setAdjustProduct}
+                  onTransfer={setTransferProduct}
                   onToggleActive={toggleActive}
                   canManage={isAdmin}
                 />
@@ -520,6 +523,14 @@ export default function InventoryPage() {
           if (!open) setAdjustProduct(null);
         }}
         product={adjustProduct}
+      />
+
+      <TransferStockDialog
+        open={Boolean(transferProduct)}
+        onOpenChange={(open) => {
+          if (!open) setTransferProduct(null);
+        }}
+        product={transferProduct}
       />
 
       <ConfirmDialog

@@ -12,11 +12,14 @@ import { queryKeys } from "@/lib/query-keys";
 import type {
   AdjustStockPayload,
   Category,
+  ClearPlacePayload,
+  InsertStockPayload,
   Paginated,
   Product,
   ProductListParams,
   ProductPayload,
   StockSummary,
+  TransferStockPayload,
 } from "@/types/api";
 
 export const PRODUCTS_PAGE_SIZE = 20;
@@ -114,6 +117,52 @@ export function useAdjustStock() {
       id: string;
       payload: AdjustStockPayload;
     }) => api.post<Product>(`/api/v1/products/${id}/adjust-stock`, payload),
+    onSuccess: () => invalidateProductData(queryClient),
+  });
+}
+
+/** Move units between the store display and the selling pool. */
+export function useTransferStock() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: TransferStockPayload;
+    }) => api.post<Product>(`/api/v1/products/${id}/transfer-stock`, payload),
+    onSuccess: () => invalidateProductData(queryClient),
+  });
+}
+
+export function useInsertStock() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: InsertStockPayload;
+    }) => api.post<Product>(`/api/v1/products/${id}/insert-stock`, payload),
+    onSuccess: () => invalidateProductData(queryClient),
+  });
+}
+
+export function useClearPlace() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: ClearPlacePayload;
+    }) => api.post<Product>(`/api/v1/products/${id}/clear-place`, payload),
     onSuccess: () => invalidateProductData(queryClient),
   });
 }

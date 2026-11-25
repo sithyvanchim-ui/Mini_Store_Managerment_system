@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowLeftRight,
   ArrowUpDown,
   MoreHorizontal,
   Pencil,
@@ -36,6 +37,7 @@ interface ProductsTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
   onAdjust: (product: Product) => void;
+  onTransfer: (product: Product) => void;
   onToggleActive: (product: Product) => void;
   /** When false, the actions column is hidden (staff are read-only). */
   canManage?: boolean;
@@ -45,6 +47,7 @@ export function ProductsTable({
   products,
   onEdit,
   onAdjust,
+  onTransfer,
   onToggleActive,
   canManage = true,
 }: ProductsTableProps) {
@@ -168,6 +171,10 @@ export function ProductsTable({
               >
                 {formatNumber(product.stock_qty)}
               </span>
+              <p className="text-[10px] text-muted-foreground">
+                {formatNumber(product.store_qty)} store ·{" "}
+                {formatNumber(product.sell_qty)} sell
+              </p>
             </TableCell>
             <TableCell className="text-right tabular-nums text-muted-foreground">
               {formatNumber(product.low_stock_threshold)}
@@ -202,6 +209,10 @@ export function ProductsTable({
                     <DropdownMenuItem onSelect={() => onAdjust(product)}>
                       <ArrowUpDown className="size-4" />
                       Adjust stock
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onTransfer(product)}>
+                      <ArrowLeftRight className="size-4" />
+                      Move stock
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

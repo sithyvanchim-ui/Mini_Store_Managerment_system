@@ -225,7 +225,7 @@ export function PosScreen() {
                 </DialogTitle>
                 <DialogDescription>
                   The buyer pays {formatKHR(total)} electronically — no cash.
-                  Pick the channel they are paying with.
+                  Pick the bank they use and its app opens automatically.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-2">
