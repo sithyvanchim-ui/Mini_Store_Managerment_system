@@ -14,6 +14,11 @@ export const BANK_APP_NAMES: Partial<Record<PaymentMethod, string>> = {
   acleda: "ACLEDA",
 };
 
+/** Store listing for the bank app (used by the checkout hand-off button). */
+export const BANK_APP_STORE_URLS: Partial<Record<PaymentMethod, string>> = {
+  aba_khqr: "https://apps.apple.com/app/id968860649",
+};
+
 /** Deep link that hands the KHQR payload to the chosen bank app. */
 export function buildBankAppLink(
   method: PaymentMethod,
@@ -22,10 +27,4 @@ export function buildBankAppLink(
   const scheme = BANK_APP_SCHEMES[method];
   if (!scheme) return null;
   return `${scheme}://pay?qr=${encodeURIComponent(qr)}`;
-}
-
-/** True when the page is running on a phone or tablet. */
-export function isMobileBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BadgeCheck } from "lucide-react";
+import { BANK_APP_STORE_URLS } from "@/lib/bank-app";
 import { PosCatalogue } from "@/components/sales/pos-catalogue";
 import { PosCart, type CartLine } from "@/components/sales/pos-cart";
 import {
@@ -278,13 +279,26 @@ export function PosScreen() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  className="rounded-full text-xs font-bold"
-                  onClick={() => setPayStep("qr")}
-                >
-                  Next · {PAYMENT_LABELS[payMethod]}
-                </Button>
+                {BANK_APP_STORE_URLS[payMethod] ? (
+                  <Button asChild className="rounded-full text-xs font-bold">
+                    <a
+                      href={BANK_APP_STORE_URLS[payMethod]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setPayStep("qr")}
+                    >
+                      Next · {PAYMENT_LABELS[payMethod]}
+                    </a>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    className="rounded-full text-xs font-bold"
+                    onClick={() => setPayStep("qr")}
+                  >
+                    Next · {PAYMENT_LABELS[payMethod]}
+                  </Button>
+                )}
               </div>
             </>
           ) : (

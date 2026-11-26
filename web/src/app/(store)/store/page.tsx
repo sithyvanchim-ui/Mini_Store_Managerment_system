@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BANK_APP_STORE_URLS } from "@/lib/bank-app";
 import { useStoreCheckout, useStoreMenu, useStoreOrders } from "@/hooks/use-store";
 import { useMe } from "@/hooks/use-me";
 import { queryKeys } from "@/lib/query-keys";
@@ -526,13 +527,26 @@ export default function StorePage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  className="rounded-full text-xs font-bold"
-                  onClick={() => setPayStep("qr")}
-                >
-                  Next · {PAYMENT_LABELS[payMethod]}
-                </Button>
+                {BANK_APP_STORE_URLS[payMethod] ? (
+                  <Button asChild className="rounded-full text-xs font-bold">
+                    <a
+                      href={BANK_APP_STORE_URLS[payMethod]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setPayStep("qr")}
+                    >
+                      Next · {PAYMENT_LABELS[payMethod]}
+                    </a>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    className="rounded-full text-xs font-bold"
+                    onClick={() => setPayStep("qr")}
+                  >
+                    Next · {PAYMENT_LABELS[payMethod]}
+                  </Button>
+                )}
               </div>
             </>
           ) : (

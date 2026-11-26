@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Landmark, Loader2, QrCode } from "lucide-react";
 import { KhqrImage } from "@/components/sales/khqr-image";
 import {
@@ -13,7 +13,6 @@ import { ApiError } from "@/lib/api";
 import {
   BANK_APP_NAMES,
   buildBankAppLink,
-  isMobileBrowser,
 } from "@/lib/bank-app";
 import { formatKHR } from "@/lib/utils";
 import { usePaymentKhqr } from "@/hooks/use-sales";
@@ -51,12 +50,11 @@ export const PAYMENT_METHODS: Array<{
 /** Scan instruction shown under the QR, per chosen method. */
 const QR_HINTS: Record<PaymentMethod, string> = {
   aba_khqr:
-    "ABA Mobile opens automatically on your phone. If it did not, scan this QR or tap Open ABA app.",
+    "Tap Next · ABA KHQR to open the ABA app, or scan this QR with any bank app.",
   alipay: "Open Alipay and scan this QR to pay.",
   card: "The buyer scans this QR with their bank app to pay the exact amount.",
   pi_pay: "Open Pi Pay and scan this QR to pay.",
-  acleda:
-    "ACLEDA Mobile opens automatically on your phone. If it did not, scan this QR or tap Open ACLEDA app.",
+  acleda: "Open ACLEDA Mobile and scan this QR to pay the exact amount.",
 };
 
 /**
@@ -88,18 +86,6 @@ export function PaymentQrStep({
 
   const bankLink = qr ? buildBankAppLink(payMethod, qr) : null;
   const bankName = BANK_APP_NAMES[payMethod];
-  const launchedQr = useRef<string | null>(null);
-
-  // Jump straight into the buyer's bank app as soon as the amount-locked
-  // QR is ready. Phones can hand off to the app; desktop browsers cannot, so
-  // they keep the QR and the manual button instead (auto window.open during
-  // commit also trips React's scheduler).
-  useEffect(() => {
-    if (!bankLink || !qr || launchedQr.current === qr) return;
-    launchedQr.current = qr;
-    if (!isMobileBrowser()) return;
-    window.location.href = bankLink;
-  }, [bankLink, qr]);
 
   return (
     <>
@@ -108,8 +94,8 @@ export function PaymentQrStep({
           {PAYMENT_LABELS[payMethod]} · {formatKHR(total)}
         </DialogTitle>
         <DialogDescription>
-          The buyer&apos;s {bankName ?? "bank"} app opens with this exact amount
-          already filled in — it is locked to {formatKHR(total)}.
+          Pay the exact amount with {bankName ?? "the bank app"} — this QR is
+          locked to {formatKHR(total)}.
         </DialogDescription>
       </DialogHeader>
 

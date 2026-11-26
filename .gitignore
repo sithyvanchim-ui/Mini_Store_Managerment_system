@@ -29,3 +29,7 @@ Thumbs.db
 # Logs
 *.log
 debug.log
+
+# Runtime link file
+public-link.txt
+public-link-qr.png
